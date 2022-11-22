@@ -1,6 +1,6 @@
 #############Processing Script: Polyamorous Mate Preferences -- Budget Allocation #################
   ####Ashley J Coventry, Tamsin German, Dan Conroy-Beam########
-
+#hi
 ###load packages 
 library(psych)
 library(lmerTest)
