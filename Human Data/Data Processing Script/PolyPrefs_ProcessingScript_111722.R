@@ -1,6 +1,5 @@
 #############Processing Script: Polyamorous Mate Preferences -- Budget Allocation #################
   ####Ashley J Coventry, Tamsin German, Dan Conroy-Beam########
-#hi
 ###load packages 
 library(psych)
 library(lmerTest)
@@ -71,57 +70,49 @@ data<-data[is.na(data$poly_attn_dup) | data$poly_attn_dup==F,]
 
 data$PIN<-as.character(sample(1:nrow(data)))
 
-
-
-####This below does not work rn bc for some reason the data exported as words and not numbers and also only in one column
-
+########MAKE SURE COLUMN #S ARE CORRECT######
 ###change column names for race
-#colnames(data)[7:13] <- c("race_asian", "race_black", "race_hispanic", "race_mena", "race_native", "race_white", "race_na")
+colnames(data)[7:13] <- c("race_asian", "race_black", "race_hispanic", "race_mena", "race_native", "race_white", "race_na")
 
 ###recode self and actual partner  ratings into 0-10 scale instead of 1:11(excluding age and gender)
-#data[,c(31:44, 49:62, 66:79, 83:96)] <- (data[,c(31:44, 49:62, 66:79, 83:96)]-1)
+data[,c(31:44, 49:62, 66:79, 83:96)] <- (data[,c(31:44, 49:62, 66:79, 83:96)]-1)
 
 ###combine self ratings and actual partner ratings into composites
   #1 composite for the 2 questions of each trait
   #create data frame of just trait ratings 
 
-#ratings <- data[,c(31:44, 49:62, 66:79, 83:96)]
+ratings <- data[,c(31:44, 49:62, 66:79, 83:96)]
 
 ##compute composite ratings 
   #go into ratings and take first two columns and first row and calculate mean
   #do this for all rows and pairs of columns in ratings
+comps <- sapply(seq(1,56,2), function(x) rowMeans(ratings[,x:(x+1)]))
 
-#comps <- sapply(seq(1,56,2), function(x) rowMeans(ratings[,x:(x+1)]))
+#take every other column name in ratings and put in vector
+compNames <- colnames(ratings)[seq(1,56,2)]
 
-  #take every other column name in ratings and put in vector
+#eliminate the 1 from each column name and replace with nothing (e.g. intell_1 to intell)
+compNames<-gsub("1","",compnames)
 
-#compnames <- colnames(ratings)[seq(1,56,2)]
+#add compnames as column names in comps dataset
+colnames(comps)<- compNames
 
-  #eliminate the 1 from each column name and replace with nothing (e.g. intell_1 to intell)
-
-#compnames<-gsub("1","",compnames)
-
-  #add compnames as column names in comps dataset
-
-#colnames(comps)<- compnames
-
-  #add comps data set to data
-
-#data<-cbind(data, comps)
+#add comps data set to data
+data<-cbind(data, comps)
 
 
 ###create group variable 
 #single monogamous, partnered monogamous, single polyamorous, one partner polyamorous more than one partner polyamorous
-#data$group<-
-  #ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
-         #ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
-               # ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
-                       #ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
+data$group<-
+  ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
+         ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
+               ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
+                       ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
 
 
 
 ###save processed dataframe as a csv
-#date<-format(Sys.time(),format="%Y%m%d %H%M%S")
+date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-#write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs/Human Data/Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs/Human Data/Processed Data",date,".csv"), row.names = FALSE)
 
