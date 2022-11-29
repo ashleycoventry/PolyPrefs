@@ -73,6 +73,13 @@ data$PIN<-as.character(sample(1:nrow(data)))
 #race responses are combined in one column (i.e., "5,6") -- what do we do about that?
 
 
+###rename budget allocation columns
+colnames(data)[14:27] <- c("idealAmbitionBlue", "idealAttractBlue", "idealIntelBlue", 
+                           "idealSexyBlue", "idealKindBlue", "idealStatusBlue", "idealWealthBlue", 
+                           "idealAmbitionOrange", "idealAttractOrange", "idealIntelOrange", 
+                           "idealSexyOrange", "idealKindOrange", "idealStatusOrange", "idealWealthOrange")
+
+
 ###change values from character to numeric
 data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]<-as.numeric(unlist(data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]))
 
