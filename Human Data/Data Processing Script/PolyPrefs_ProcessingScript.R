@@ -8,6 +8,7 @@ library(car)
 
 
 ###load data###
+#deleted fake generated data in excel file already
 data<-read.csv(file.choose())
 
 
@@ -17,10 +18,6 @@ data<-data[-c(1:2),]
 
 ###eliminate unnecessary columns
 data<-data[,18:116]
-
-###eliminate generated data (prior to study launch)
-  #how do I do this
-  #can i just delete it from the excel file
   
 
 ###eliminate potential bots based on written responses
@@ -70,12 +67,20 @@ data<-data[is.na(data$poly_attn_dup) | data$poly_attn_dup==F,]
 
 data$PIN<-as.character(sample(1:nrow(data)))
 
-########MAKE SURE COLUMN #S ARE CORRECT######
-###change column names for race
-colnames(data)[7:13] <- c("race_asian", "race_black", "race_hispanic", "race_mena", "race_native", "race_white", "race_na")
+
+
+###race
+#race responses are combined in one column (i.e., "5,6") -- what do we do about that?
+
+
+###change values from character to numeric
+data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]<-as.numeric(unlist(data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]))
+
 
 ###recode self and actual partner  ratings into 0-10 scale instead of 1:11(excluding age and gender)
 data[,c(31:44, 49:62, 66:79, 83:96)] <- (data[,c(31:44, 49:62, 66:79, 83:96)]-1)
+
+
 
 ###combine self ratings and actual partner ratings into composites
   #1 composite for the 2 questions of each trait
@@ -92,7 +97,7 @@ comps <- sapply(seq(1,56,2), function(x) rowMeans(ratings[,x:(x+1)]))
 compNames <- colnames(ratings)[seq(1,56,2)]
 
 #eliminate the 1 from each column name and replace with nothing (e.g. intell_1 to intell)
-compNames<-gsub("1","",compnames)
+compNames<-gsub("1","",compNames)
 
 #add compnames as column names in comps dataset
 colnames(comps)<- compNames
@@ -107,9 +112,11 @@ data$group<-
   ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
          ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
                ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
+                      #seems like this lumps in "prefer not to say" with ppl with multiple partners --problem?
                        ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
+                                  #issue with else output bc includes "prefer not to say" responses
 
-
+                          
 
 ###save processed dataframe as a csv
 date<-format(Sys.time(),format="%Y%m%d %H%M%S")
