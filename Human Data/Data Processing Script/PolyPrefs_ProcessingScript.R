@@ -121,5 +121,5 @@ data$group<-
 ###save processed dataframe as a csv
 date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs/Human Data/Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data",date,".csv"), row.names = FALSE)
 
