@@ -132,10 +132,8 @@ screeplot
 
 diff(sapply(1:7, function(x) kmeans(longData[,5:11], x)$tot.withinss))
 
-########below needs to be changed depending on actual # of clusters found########
 
 ##Add this classification to the original dataframe
-#note: kfit3 could change to kfit2 or kfit1 etc. depending on # of clusters
 
 longData$kfit3<-kfit3$cluster
 
@@ -269,38 +267,38 @@ table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==3])#/table(
 ### PERMUTATIONS ###
 
 ##create blank data frame to store null distribution averages
-nulldistavg <- data.frame(matrix(0,1,10000))
+nullDistAvg <- data.frame(matrix(0,1,10000))
 
 ##for loop to generate data of null dist
 for(a in 1:10000){
   #creating vector of clusters that are random, keeping proportions of each group the same
-  nullclustervector <- sample(dataWide$kfit3)
-  data_long_null <- cbind(dataWide[,1:13], nullclustervector) 
-  data_wide_null <- dcast(data_long_null, ID + gender + age ~ partnertype, value.var="nullclustervector")
+  nullClusterVector <- sample(longData$kfit3)
+  dataLongNull <- cbind(longData[,1:13], nullClusterVector) 
+  dataWideNull <- dcast(dataLongNull, ID + gender + age ~ partnertype, value.var="nullClusterVector")
   #Rename the columns in our new wide dataframe
-  colnames(data_wide_null)<-c("ID","gender","age","kfit_partner_a","kfit_partner_b")
+  colnames(dataWideNull)<-c("ID","gender","age","kfitBlue","kfitOrange")
   #Compute sameordiff
-  data_wide_null$sameordiff<-ifelse(data_wide_null$kfit_partner_a == data_wide_null$kfit_partner_b, 0, 1)
+  dataWideNull$sameordiff<-ifelse(dataWideNull$kfitBlue == dataWideNull$kfitOrange, 0, 1)
   #Computing average differentness
-  avgdiff_null <- mean(data_wide_null$sameordiff)
+  avgDiffNull <- mean(dataWideNull$sameordiff)
   #stat we want to save in the matrix
-  nulldistavg[1,a]<-avgdiff_null
+  nullDistAvg[1,a]<-avgDiffNull
 }
 
 
 
 ##see whether we are in extremes of null dist (compare output to our avgdiff)
 
-nulldist_high<-quantile(nulldistavg[,1:10000],c(0.975))
-nulldist_low<-quantile(nulldistavg[,1:10000],c(0.025)) 
+nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975))
+nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
 
-##see proportion of null dist values that are smaller/larger than our avgdiff 
-#sum(unlist(nulldistavg) < avgdiff) 
-#sum(unlist(nulldistavg) > avgdiff) #run either depending on results of above 
+##see proportion of null dist values that are smaller than our avgdiff 
+sum(unlist(nullDistAvg) < avgdiff) 
+
 
 
 #convert to p-value, divide by number of shuffles (from for loop)
-sum(unlist(nulldistavg) < avgdiff) /10000 #p=0.0027
+sum(unlist(nullDistAvg) < avgdiff) /10000 
 
 
 ###How many ideal partners are in each cluster?
@@ -308,7 +306,7 @@ sum(unlist(nulldistavg) < avgdiff) /10000 #p=0.0027
 ##for people who wanted both partners in same cluster
 table(dataWide$kfitOrange[dataWide$sameordiff ==0])
 
-##for people who wanted partners in diffferent clusters
+##for people who wanted partners in different clusters
 table(dataWide$kfitOrange[dataWide$sameordiff ==1])  
 table(dataWide$kfitBlue[dataWide$sameordiff ==1]) 
 
@@ -316,21 +314,21 @@ table(dataWide$kfitBlue[dataWide$sameordiff ==1])
 #(run depending on results of previous analyses)
 
 ##Create blank columns in dataWide
-#dataWide$oneAttractive <- NA
-#dataWide$oneWealthy <- NA
+dataWide$oneAttractive <- NA
+dataWide$oneWealthy <- NA
 
 ##for loop to fill columns
-#for(i in 1:NROW(dataWide)){
-  #ifelse(dataWide$kfitOrange[i] == 1 | dataWide$kfitBlue[i] == 1, dataWide$oneAttractive[i]<-1, dataWide$oneAttractive[i]<-0)
+for(i in 1:NROW(dataWide)){
+  ifelse(dataWide$kfitOrange[i] == 1 | dataWide$kfitBlue[i] == 1, dataWide$oneAttractive[i]<-1, dataWide$oneAttractive[i]<-0)
   
-#}
-#for(i in 1:NROW(dataWide)){
-  #ifelse(dataWide$kfitOrange[i] == 3 | dataWide$kfitBlue[i] == 3, dataWide$oneWealthy[i]<-1, dataWide$oneWealthy[i]<-0)
+}
+for(i in 1:NROW(dataWide)){
+  ifelse(dataWide$kfitOrange[i] == 3 | dataWide$kfitBlue[i] == 3, dataWide$oneWealthy[i]<-1, dataWide$oneWealthy[i]<-0)
   
-#}
+}
 
-#chisq.test(table(dataWide$gender, dataWide$oneAttractive))
-#chisq.test(table(dataWide$gender, dataWide$oneWealthy))
+chisq.test(table(dataWide$gender, dataWide$oneAttractive))
+chisq.test(table(dataWide$gender, dataWide$oneWealthy))
 
 
 
@@ -340,15 +338,15 @@ table(dataWide$kfitBlue[dataWide$sameordiff ==1])
 ### Plotting ###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
-#meanTrait <- c(g1m, g2m, g3m)
-#mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
-#trait <- c(rep(c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence"), 3))  
-#plotting <- data.frame(meanTrait, mateType, trait)
-#kfitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
-  #geom_bar(stat="identity", color="black", position=position_dodge())+
-  #theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Relative Desired Trait Level") +
-  #scale_fill_discrete(name = "Trait")
-#ggsave("3ClustersAllTraitsByPart.jpeg", plot=last_plot(), width=200, height=150, units="mm", path ="/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Figures", scale = 1, dpi=300, limitsize=TRUE)
+meanTrait <- c(g1m, g2m, g3m)
+mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
+trait <- c(rep(c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence"), 3))  
+plotting <- data.frame(meanTrait, mateType, trait)
+kfitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Relative Desired Trait Level") +
+  scale_fill_discrete(name = "Trait")
+ggsave("3ClustersAllTraitsByPart.jpeg", plot=last_plot(), width=200, height=150, units="mm", path ="/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Figures", scale = 1, dpi=300, limitsize=TRUE)
 
 ##multipanel figure
 
