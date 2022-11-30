@@ -11,6 +11,14 @@ library(dplyr)
 library(jmv)
 library(ggpubr)
 library(car)
+library(tidyverse)
+
+###Functions#### courtesy of ben lol
+#numfind<-function(variablename){
+ # variablename<-deparse(substitute(variablename))
+  #a<-which(colnames(data)==(variablename))
+  #ifelse(a>0,print(a),NA)}
+#numfind(PIN)
 
 
 ###set seed###
@@ -18,7 +26,7 @@ set.seed(112822)
 
 
 ###load data###
-data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data/Processed Data20221129 140613.csv")
+data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data/Processed Data20221129 152029.csv")
 
 
 #Remove NAs ###
@@ -26,6 +34,7 @@ data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nos
 
 nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
 longData<- data[!nacheck,]
+
 
 
 ###reshape data wide --> long and only keep columns relevant for kmeans
@@ -42,7 +51,7 @@ longdata_attract <-melt(longData[,c(102, 5, 1, 15, 22)], id.vars=c("PIN", "gende
 colnames(longdata_attract) <- c("ID", "gender", "age", "partnertype", "attractiveness")
 longdata_finance <-melt(longData[,c(102, 20, 27)], id.vars=c("PIN"))
 colnames(longdata_finance) <- c("ID2", "partnertyperepeat", "financial_prospects")
-longdata_ambition <-melt(longData[,c(102,14,121)], id.vars=c("PIN"))
+longdata_ambition <-melt(longData[,c(102,14,21)], id.vars=c("PIN"))
 colnames(longdata_ambition) <- c("ID3", "partnertyperepeat2", "ambition")
 longdata_kind <-melt(longData[,c(102,18,25)], id.vars=c("PIN"))
 colnames(longdata_kind) <- c("ID4", "partnertyperepeat3", "kindness")
@@ -82,7 +91,7 @@ longData[,5:11] <- apply(longData[,5:11],2,scale)
 
 ##ipsatize z-scored value 
 longData$mean<-sapply(unique(longData$ID),function(x) 
-  mean(unlist(longData[longData$ID==x,5:11]),na.rm=T))
+  mean(unlist(longData[longData$ID==x,5:11])))
 
 longData[,5:11]<-longData[,5:11] - longData$mean
 
@@ -102,23 +111,26 @@ kfit4<-kmeans((longData[,5:11]),4)
 kfit5<-kmeans((longData[,5:11]),5)
 #Extract 6 groups
 kfit6<-kmeans((longData[,5:11]),6)
+#Extract 7 groups
+kfit7<-kmeans((longData[,5:11]),7)
+
 
 ##Scree Plot
 
 #Extract the total withinss from each model and assign it to a data structure, k
 
-k<-c(kfit1$tot.withinss, kfit2$tot.withinss, kfit3$tot.withinss, kfit4$tot.withinss, kfit5$tot.withinss, kfit6$tot.withinss)
+k<-c(kfit1$tot.withinss, kfit2$tot.withinss, kfit3$tot.withinss, kfit4$tot.withinss, kfit5$tot.withinss, kfit6$tot.withinss, kfit7$tot.withinss)
 
 #generate scree plot
 
-dim<-c(1:6)
+dim<-c(1:7)
 screedata<-data.frame(dim,k)
 screeplot<-qplot(screedata$dim,screedata$k)
 screeplot
 
 ##see how many clusters
 
-diff(sapply(1:6, function(x) kmeans(longData[,5:11], x)$tot.withinss))
+diff(sapply(1:7, function(x) kmeans(longData[,5:11], x)$tot.withinss))
 
 ########below needs to be changed depending on actual # of clusters found########
 
@@ -195,7 +207,7 @@ dataWide <- dcast(longData, ID + gender + age ~ partnertype, value.var="kfit3")
 #ID, gender, and age = ID variables, separate kfit by partnertype (orange v blue)
 
 #Rename the columns in our new wide dataframe
-colnames(dataWide)<-c("ID","gender","age","kfitOrange","kfitBlue")
+colnames(dataWide)<-c("ID","gender","age","kfitBlue","kfitOrange")
 
 
 ##Compute sameordiff
@@ -207,11 +219,33 @@ table(dataWide$sameordiff[dataWide$gender==2]) #2 = male
 ##Computing average differentness
 avgdiff <- mean(dataWide$sameordiff)
 
+###create variable listing cluster of each partner 
+
+#make kfit cluster a factor 
+dataWide$kfitOrange <- as.factor(dataWide$kfitOrange)
+dataWide$kfitBlue <- as.factor(dataWide$kfitBlue)
+
+#create variable
+dataWide$kfitab <- ifelse(dataWide$kfitOrange == 1& dataWide$kfitBlue ==1, "1, 1",
+                          ifelse(dataWide$kfitOrange ==1 & dataWide$kfitBlue ==2, "1, 2",
+                                 ifelse(dataWide$kfitOrange ==1 & dataWide$kfitBlue ==3, "1, 3",
+                                        ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==1, "2, 1",
+                                               ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==2, "2, 2",
+                                                      ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==3, "2, 3",
+                                                             ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==1, "3, 1",
+                                                                    ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==2, "3, 2",
+                                                                           ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==3, "3, 3",NA)))))))))
+
+
+
+
+
+
 
 ### CHI SQUARE ###
 
 ##are men and women are choosing combos of partner orange and blue at diff rates?
-chisq.test(table(dataWide$gender, dataWide$kfit)) 
+chisq.test(table(dataWide$gender, dataWide$kfitab))
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisq.test(table(dataWide$kfitOrange, dataWide$kfitBlue)) 
@@ -220,36 +254,15 @@ chisq.test(table(dataWide$kfitOrange, dataWide$kfitBlue))
 table(dataWide$kfitOrange, dataWide$kfitBlue)
 
 ##looking at proportions of men v women choosing combos of partner a and b in each cluster
-table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==1])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==2])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==3])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==1])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==2])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==3])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==1])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==2])/table(dataWide$gender)
-table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==3])/table(dataWide$gender)
-
-
-
-##create variable listing cluster of each partner 
-
-#make kfit cluster a factor 
-dataWide$kfitOrange <- as.factor(dataWide$kfitOrange)
-dataWide$kfitBlue <- as.factor(dataWide$kfitBlue)
-
-#create variable
-dataWide$kfitab <- ifelse(dataWide$kfitOrange == 1& dataWide$kfitBlue ==1, "1, 1",
-                            ifelse(dataWide$kfitOrange ==1 & dataWide$kfitBlue ==2, "1, 2",
-                                   ifelse(dataWide$kfitOrange ==1 & dataWide$kfitBlue ==3, "1, 3",
-                                          ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==1, "2, 1",
-                                                 ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==2, "2, 2",
-                                                        ifelse(dataWide$kfitOrange ==2 & dataWide$kfitBlue ==3, "2, 3",
-                                                               ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==1, "3, 1",
-                                                                      ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==2, "3, 2",
-                                                                             ifelse(dataWide$kfitOrange ==3 & dataWide$kfitBlue ==3, "3, 3",NA)))))))))
-
-
+table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==1])
+table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==2])
+table(dataWide$gender[dataWide$kfitOrange == 1 & dataWide$kfitBlue ==3])
+table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==1])
+table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==2])
+table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==3])
+table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==1])
+table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==2])
+table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==3])#/table(dataWide$gender)
 
 
 
@@ -261,8 +274,8 @@ nulldistavg <- data.frame(matrix(0,1,10000))
 ##for loop to generate data of null dist
 for(a in 1:10000){
   #creating vector of clusters that are random, keeping proportions of each group the same
-  nullclustervector <- sample(data$kfit3)
-  data_long_null <- cbind(data[,1:13], nullclustervector) 
+  nullclustervector <- sample(dataWide$kfit3)
+  data_long_null <- cbind(dataWide[,1:13], nullclustervector) 
   data_wide_null <- dcast(data_long_null, ID + gender + age ~ partnertype, value.var="nullclustervector")
   #Rename the columns in our new wide dataframe
   colnames(data_wide_null)<-c("ID","gender","age","kfit_partner_a","kfit_partner_b")
