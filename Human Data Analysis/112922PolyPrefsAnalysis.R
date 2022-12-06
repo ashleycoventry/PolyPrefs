@@ -212,7 +212,8 @@ colnames(dataWide)<-c("ID","gender","age","kfitBlue","kfitOrange")
 dataWide$sameordiff<-ifelse(dataWide$kfitOrange == dataWide$kfitBlue, 0, 1)
 table(dataWide$sameordiff[dataWide$gender==1]) #1 = female
 table(dataWide$sameordiff[dataWide$gender==2]) #2 = male
-  #does it matter if we do sex v gender?
+  #does it matter if we do sex v gender? sex was exluded from df so would have to reinclude it
+
 
 ##Computing average differentness
 avgdiff <- mean(dataWide$sameordiff)
@@ -260,7 +261,6 @@ table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==2])
 table(dataWide$gender[dataWide$kfitOrange == 2 & dataWide$kfitBlue ==3])
 table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==1])
 table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==2])
-table(dataWide$gender[dataWide$kfitOrange == 3 & dataWide$kfitBlue ==3])#/table(dataWide$gender)
 
 
 
@@ -294,7 +294,7 @@ nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025))
 
 ##see proportion of null dist values that are smaller than our avgdiff 
 sum(unlist(nullDistAvg) < avgdiff) 
-
+  #no null dist values are smaller than avgdiff?
 
 
 #convert to p-value, divide by number of shuffles (from for loop)
@@ -314,8 +314,9 @@ table(dataWide$kfitBlue[dataWide$sameordiff ==1])
 #(run depending on results of previous analyses)
 
 ##Create blank columns in dataWide
-dataWide$oneAttractive <- NA
-dataWide$oneWealthy <- NA
+dataWide$oneAttractive <- NA #for cluster
+dataWide$oneWealthy <- NA #for cluster 3
+dataWide$oneKind <- NA #for cluster 2
 
 ##for loop to fill columns
 for(i in 1:NROW(dataWide)){
@@ -327,9 +328,13 @@ for(i in 1:NROW(dataWide)){
   
 }
 
+for(i in 1:NROW(dataWide)){
+  ifelse(dataWide$kfitOrange[i] == 2 | dataWide$kfitBlue[i] == 2, dataWide$oneKind[i]<-1, dataWide$oneKind[i]<-0)
+  
+}
 chisq.test(table(dataWide$gender, dataWide$oneAttractive))
 chisq.test(table(dataWide$gender, dataWide$oneWealthy))
-
+chisq.test(table(dataWide$gender, dataWide$oneKind))
 
 
 
