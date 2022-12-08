@@ -1,0 +1,145 @@
+---
+title: "Polyamorous Mate Preferences -- Budget Allocation: Analysis Script"
+author: "Ashley J. Coventry, Tamsin C. German, Daniel Conroy-Beam"
+date: "2022-12-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+###load packages 
+library(psych) #for scree plot
+library(ggplot2) #For generating other plots
+library(data.table) #For reshaping data
+
+#I don't think you needed any of the packages I deleted or the numfind function
+
+###set seed###
+set.seed(112822)
+
+```
+
+
+
+
+
+```{r loadData}
+
+###load data###
+#One of the advantages in working with R projects is that the working directory is automatically relative to the project, so you don't need to specify the complete filepath
+#This is also more robust, because your filepaths work work even on someone else's computer as long as they have the project
+data <- read.csv("Human Data/Processed Data/Processed Data20221129 152029.csv")
+
+
+#Remove NAs ###
+#necessary when merging back into the original data frame because kfits is omitting NAs. 
+
+nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
+#Shouldn't you remove NAs from data, like below?
+#Otherwise you wind up with people in data who aren't in longData
+data<- data[!nacheck,]
+
+#If you're excluding by gender, just go ahead and do it here
+data<-data[data$gender<3,]
+
+#No need to do multiple melts for each preference. The melt function from data.table can do what you want
+longData<-melt(as.data.table(data),id.vars=c("PIN","gender","age"),
+               measure.vars=list(c(14,21),
+                                 c(15,22),
+                                 c(16,23),
+                                 c(17,24),
+                                 c(18,25),
+                                 c(19,26),
+                                 c(20,27)))
+
+#Relabel columns
+#(your variable names are too long btw)
+colnames(longData)[4:11]<-c("partnerType","ambition","attractiveness",
+                            "intelligence","sexiness","kindness",
+                            "status","financialProspects")
+
+#Relabel partner type values
+longData$partnerType<-as.factor(ifelse(longData$partnerType==1,"idealBlue","idealOrange"))
+
+
+```
+
+
+```{r kMeans}
+
+#This will run the k-means across several values of k and extract the within ss automagically
+kfitWss<-sapply(1:7,function(x) kmeans(longData[,5:11],x)$tot.withinss)
+
+#All you need for the scree plot:
+screePlot<-qplot(1:7,kfitWss)
+
+#Computes differences in within ss across k for k-means clustering
+#Don't write lines in your script that aren't assigned to anything
+#If you need something output in the console, assign it to a data structure and type the data structure name in the console
+wssDiffs<-diff(kfitWss)
+
+
+##Add the best classification to the original dataframe
+
+longData$kfit3<-kmeans(longData[,5:11],3)$cluster
+
+#Create vectors of preference means for each cluster
+clustCenters<-kmeans(longData[,5:11],3)$centers
+
+#Look at gender breakdown by cluster
+clustGender<-table(longData$gender,longData$kfit3)
+
+
+#Computes variances in trait ratings by cluster
+#Why did you want to do this though?
+clustVars<-apply(clustCenters,1,var)
+
+```
+
+
+
+```{r sameDiff}
+
+#not sure why you were recasting to wide for the same vs. diff analyses
+#You already have data, which is already wide
+#Can just do this:
+
+#Transfer partner clusters back to data
+data$blueClust<-longData$kfit3[longData$partnerType=="idealBlue"]
+data$orangeClust<-longData$kfit3[longData$partnerType=="idealOrange"]
+
+#Determine for each participant whether their orange and blue partners are in the same cluster
+data$sameOrDiff<-apply(data[,132:133],1,function(x)
+  sum(duplicated(x))
+  )
+#Keep in mind this is coded so that same = 1 and diff = 0
+
+#Get sameOrDiff as function of gender
+#Again, don't write lines in your script that output directly to the console
+#Assign things to data structures
+#Also you should recode gender as women = 0, men = 1 (that's pretty common)
+genderDiff<-table(data$sameOrDiff,data$gender)
+
+
+#Create a variable listing clusters of both partners for each participant
+data$kFitab<-apply(data[,132:133],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
+
+```
+
+
+```{r chisq}
+
+#are men and women are choosing combos of partner orange and blue at diff rates?
+#Some combinations still too rare; try a Fisher's exact test instead
+chisqGender<-chisq.test(table(data$gender,data$kFitab))
+
+##do preferences for partner orange predict preferences for partner blue?
+chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
+
+#you already have a table of clusters by gender above, no need to remake it
+#For combinations, can do:
+clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
+
+
+```
