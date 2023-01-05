@@ -7,7 +7,8 @@
 library(psych) #for scree plot
 library(ggplot2) #For generating other plots
 library(data.table) #for reshaping data
-
+library(stringr) #for permutation analy data reorganizing
+library(reshape2) # for permutation analysis data reorganizing
 
 ###set seed###
 set.seed(112822)
@@ -121,9 +122,11 @@ data$kFitab<-apply(data[,132:133],1,function(x) paste0(sort(as.numeric(x)),colla
 #are men and women are choosing combos of partner orange and blue at diff rates?
 #Some combinations still too rare; try a Fisher's exact test instead
 chisqGender<-chisq.test(table(data$gender,data$kFitab))
+fisherGender <- fisher.test(table(data$gender, data$kFitab))
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
+fisherClust <- fisher.test(table(data$blueClust, data$orangeClust))
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
@@ -132,19 +135,20 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 ### PERMUTATIONS ###
 
+
 ##create blank data frame to store null distribution averages
 nullDistAvg <- data.frame(matrix(0,1,10000))
 
 ##for loop to generate data of null dist ##NOT WORKING
 for(a in 1:10000){
   #creating vector of clusters that are random, keeping proportions of each group the same
-  nullClusterVector <- sample(data$kfit3)
-  dataNull <- cbind(data[,1:12], nullClusterVector)  ##THIS LINE IS THE ISSUE
-  dataNull <- dcast(dataNull, ID + gender + age ~ partner, value.var="nullClusterVector")
-  #Rename the columns in our new wide dataframe
-  colnames(dataNull)<-c("ID","gender","age","kfitBlue","kfitOrange")
+  nullClusterVector <- sample(data$kFitab)
+  cols <- c(1, 2, 5, 102)
+  dataNull <- cbind(data[,cols], nullClusterVector)  
+  #split kFitab into kFita and kFitb so we can compare sameOrDiff
+  dataNull[c('kFita', 'KFitb')] <- str_split_fixed(dataNull$kFitab, ',', 2)
   #Compute sameordiff
-  dataNull$sameOrDiff<-ifelse(dataNull$kfitBlue == dataNull$kfitOrange, 0, 1)
+  dataNull$sameOrDiff<-ifelse(dataNull$kfita == dataNull$kfitb, 0, 1)
   #Computing average differentness
   avgDiffNull <- mean(dataNull$sameOrDiff)
   #stat we want to save in the matrix
@@ -159,50 +163,49 @@ nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975))
 nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
 
 ##see proportion of null dist values that are smaller than our avgdiff 
-sum(unlist(nullDistAvg) < avgdiff) 
-  #no null dist values are smaller than avgdiff?
+propDiff <- sum(unlist(nullDistAvg) < avgdiff) 
 
 
 #convert to p-value, divide by number of shuffles (from for loop)
-sum(unlist(nullDistAvg) < avgdiff) /10000 
+pValueDiff <- sum(unlist(nullDistAvg) < avgdiff) /10000 
 
 
 ###How many ideal partners are in each cluster?
 
 ##for people who wanted both partners in same cluster
-table(dataWide$kfitOrange[dataWide$sameordiff ==0]) #men seem to be driving this so should separate by gender
+sameClust <- table(data$kfita[data$sameordiff == 0]) 
 
 ##for people who wanted partners in different clusters
-table(dataWide$kfitOrange[dataWide$sameordiff ==1])  
-table(dataWide$kfitBlue[dataWide$sameordiff ==1]) 
+diffClustA <- table(data$kfita[data$sameordiff ==1])  
+diffClustB <- table(data$kfitb[data$sameordiff ==1]) 
 
 ###More Chi Squares: proportion of participants with at least 1 partner in specific clusters 
-#(run depending on results of previous analyses)
 
 ##Create blank columns in dataWide
-dataWide$oneKind <- NA #for cluster 1
-dataWide$oneWellRounded <- NA #for cluster 3
-dataWide$oneSexy<- NA #for cluster 2
+data$oneKind <- NA #for cluster 1
+data$oneWellRounded <- NA #for cluster 3
+data$oneSexy<- NA #for cluster 2
 
 ##for loop to fill columns
-for(i in 1:NROW(dataWide)){
-  ifelse(dataWide$kfitOrange[i] == 1 | dataWide$kfitBlue[i] == 1, dataWide$oneKind[i]<-1, dataWide$oneKind[i]<-0)
+for(i in 1:NROW(data)){
+  ifelse(data$kFitb[i] == 1 | data$kFita[i] == 1, data$oneKind[i]<-1, data$oneKind[i]<-0)
   
 }
-for(i in 1:NROW(dataWide)){
-  ifelse(dataWide$kfitOrange[i] == 3 | dataWide$kfitBlue[i] == 3, dataWide$oneWellRounded[i]<-1, dataWide$oneWellRounded[i]<-0)
+for(i in 1:NROW(data)){
+  ifelse(data$kFitb[i] == 3 | data$kFita[i] == 3, data$oneWellRounded[i]<-1, data$oneWellRounded[i]<-0)
   
 }
 
-for(i in 1:NROW(dataWide)){
-  ifelse(dataWide$kfitOrange[i] == 2 | dataWide$kfitBlue[i] == 2, dataWide$oneSexy[i]<-1, dataWide$oneSexy[i]<-0)
+for(i in 1:NROW(data)){
+  ifelse(data$kFitb[i] == 2 | data$kFita[i] == 2, data$oneSexy[i]<-1, data$oneSexy[i]<-0)
   
 }
-chisq.test(table(dataWide$gender, dataWide$oneKind))
-chisq.test(table(dataWide$gender, dataWide$oneWellRounded))
-chisq.test(table(dataWide$gender, dataWide$oneSexy))
 
-#getting warnings for all 3 of these chisq tests
+chisqKind <- chisq.test(table(data$gender, data$oneKind))
+chisqWellRounded <- chisq.test(table(data$gender, data$oneWellRounded))
+chisqSexy <- chisq.test(table(data$gender, data$oneSexy))
+
+
 
 
 
@@ -219,47 +222,18 @@ kfitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
   theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Relative Desired Trait Level") +
   scale_fill_discrete(name = "Trait")
-#ggsave("3ClustersAllTraitsByPart.jpeg", plot=last_plot(), width=200, height=150, units="mm", path ="/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Figures", scale = 1, dpi=300, limitsize=TRUE)
-
-##multipanel figure
-
-#first create individual plot for each cluster
-
-#cluster 1 (title will change based on clusters)
-#meanTrait1 <- g1m
-#trait1 <- c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence")
-#plotting1 <- data.frame(meanTrait1, trait1)
-#plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
-  #geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
-  #theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(-0.7,0.7) +
- #ggtitle("Attractive & Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
-
-#cluster 2 (title will change based on clusters)
-#meanTrait2 <- g2m
-#trait2 <- c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence")
-#plotting2 <- data.frame(meanTrait2, trait2)
-#plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meantraitlevel2)) +
-  #geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
-  #theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(-0.7,0.7) +
-  #ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
-
-#cluster 3 (title will change based on clusters)
-#meanTrait3 <- g3m
-#trait3 <- c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence")
-#plottingdf3 <- data.frame(meanTrait3, trait3)
-#plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
-  #geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
-  #theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(-0.7,0.7) +
-  #ggtitle("Smart & Wealthy") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
-
-
-#combine clusters into one graph
-#panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
-#panelPlot
 
 
 
 
+
+#######Bisexual Poly Prefs #######
+
+##how many bisexual people are in our sample?
+biSamp <- table(data$sex_orient)
+
+##get only bi dataframe
+biData <- subset(data, data$sex_orient == 3)
 
 
 
