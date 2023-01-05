@@ -8,7 +8,6 @@ library(psych) #for scree plot
 library(ggplot2) #For generating other plots
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
-library(reshape2) # for permutation analysis data reorganizing
 
 ###set seed###
 set.seed(112822)
@@ -75,7 +74,7 @@ wssDiffs<-diff(kfitWss)
 
 ##Add this classification to the original dataframe
 
-longData$kfit3<-kmeans(longData[,5:11],3)$cluster
+longData$kFitab<-kmeans(longData[,5:11],3)$cluster
 
 
 ##Create vectors of preference means for each cluster (without age)
@@ -83,7 +82,7 @@ longData$kfit3<-kmeans(longData[,5:11],3)$cluster
 clustCenters<-kmeans(longData[,5:11],3)$centers
 
 ##Look at gender breakdown by cluster #1 = women, #2 = men
-clustGender<-table(longData$gender,longData$kfit3)
+clustGender<-table(longData$gender,longData$kFitab)
 
 ##compute variance between trait ratings for each cluster
 #to see if maybe one cluster is more well rounded than others
@@ -96,8 +95,8 @@ clustVars<-apply(clustCenters,1,var)
 #do people want both of their ideal partners in the same cluster or in different ones? 
 
 ##Transfer partner clusters back to data (since "data" is wide)
-data$blueClust<-longData$kfit3[longData$partner=="idealBlue"]
-data$orangeClust<-longData$kfit3[longData$partner=="idealOrange"]
+data$blueClust<-longData$kFitab[longData$partner=="idealBlue"]
+data$orangeClust<-longData$kFitab[longData$partner=="idealOrange"]
 
 ##Determine for each participant whether their orange and blue partners are in the same cluster
 #same = 1, diff = 0
@@ -117,16 +116,17 @@ avgDiff <- mean(data$sameOrDiff)
 data$kFitab<-apply(data[,132:133],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
 
 
-### CHI SQUARE -- Fisher's exact test since some clusters are rare###
+### CHI SQUARE -- some use Fisher's exact test since some clusters are rare###
 
 #are men and women are choosing combos of partner orange and blue at diff rates?
-#Some combinations still too rare; try a Fisher's exact test instead
+
 chisqGender<-chisq.test(table(data$gender,data$kFitab))
-fisherGender <- fisher.test(table(data$gender, data$kFitab))
+#fisherGender <- fisher.test(table(data$gender, data$kFitab))
+  #get error with Fisher's test
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
-fisherClust <- fisher.test(table(data$blueClust, data$orangeClust))
+#fisherClust <- fisher.test(table(data$blueClust, data$orangeClust))
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
@@ -139,16 +139,16 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 ##create blank data frame to store null distribution averages
 nullDistAvg <- data.frame(matrix(0,1,10000))
 
-##for loop to generate data of null dist ##NOT WORKING
+##for loop to generate data of null dist 
 for(a in 1:10000){
   #creating vector of clusters that are random, keeping proportions of each group the same
-  nullClusterVector <- sample(data$kFitab)
+  nullAb<- sample(data$kFitab)
   cols <- c(1, 2, 5, 102)
-  dataNull <- cbind(data[,cols], nullClusterVector)  
+  dataNull <- cbind(data[,cols], nullAb)  
   #split kFitab into kFita and kFitb so we can compare sameOrDiff
-  dataNull[c('kFita', 'KFitb')] <- str_split_fixed(dataNull$kFitab, ',', 2)
+  dataNull[c('kFita', 'kFitb')] <- str_split_fixed(dataNull$nullAb, ',', 2)
   #Compute sameordiff
-  dataNull$sameOrDiff<-ifelse(dataNull$kfita == dataNull$kfitb, 0, 1)
+  dataNull$sameOrDiff<-ifelse(dataNull$kFita == dataNull$kFitb, 0, 1)
   #Computing average differentness
   avgDiffNull <- mean(dataNull$sameOrDiff)
   #stat we want to save in the matrix
@@ -158,8 +158,8 @@ for(a in 1:10000){
 
 
 ##see whether we are in extremes of null dist (compare output to our avgdiff)
-
-nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975))
+#getting errors now out of the blue -- maybe new update?
+nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975)) 
 nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
 
 ##see proportion of null dist values that are smaller than our avgdiff 
@@ -173,37 +173,42 @@ pValueDiff <- sum(unlist(nullDistAvg) < avgdiff) /10000
 ###How many ideal partners are in each cluster?
 
 ##for people who wanted both partners in same cluster
-sameClust <- table(data$kfita[data$sameordiff == 0]) 
+sameClust <- table(data$blueClust[data$sameOrDiff == 0]) 
 
 ##for people who wanted partners in different clusters
-diffClustA <- table(data$kfita[data$sameordiff ==1])  
-diffClustB <- table(data$kfitb[data$sameordiff ==1]) 
+#don't need to run separately for clusters A and B bc made order arbitrary
+diffClust <- table(data$blueClust[data$sameOrDiff ==1])  
+
 
 ###More Chi Squares: proportion of participants with at least 1 partner in specific clusters 
 
 ##Create blank columns in dataWide
-data$oneKind <- NA #for cluster 1
-data$oneWellRounded <- NA #for cluster 3
-data$oneSexy<- NA #for cluster 2
+data$clust1 <- NA #for cluster 1
+data$clust2<- NA #for cluster 2
+data$clust3 <- NA #for cluster 3
+
 
 ##for loop to fill columns
 for(i in 1:NROW(data)){
-  ifelse(data$kFitb[i] == 1 | data$kFita[i] == 1, data$oneKind[i]<-1, data$oneKind[i]<-0)
-  
-}
-for(i in 1:NROW(data)){
-  ifelse(data$kFitb[i] == 3 | data$kFita[i] == 3, data$oneWellRounded[i]<-1, data$oneWellRounded[i]<-0)
+  ifelse(data$orangeClust[i] == 1 | data$blueClust[i] == 1, data$clust1[i]<-1, data$clust1[i]<-0)
   
 }
 
 for(i in 1:NROW(data)){
-  ifelse(data$kFitb[i] == 2 | data$kFita[i] == 2, data$oneSexy[i]<-1, data$oneSexy[i]<-0)
+  ifelse(data$orangeClust[i] == 2 | data$blueClust[i] == 2, data$clust2[i]<-1, data$clust2[i]<-0)
   
 }
 
-chisqKind <- chisq.test(table(data$gender, data$oneKind))
-chisqWellRounded <- chisq.test(table(data$gender, data$oneWellRounded))
-chisqSexy <- chisq.test(table(data$gender, data$oneSexy))
+for(i in 1:NROW(data)){
+  ifelse(data$orangeClust[i] == 3 | data$blueClust[i] == 3, data$clust3[i]<-1, data$clust3[i]<-0)
+  
+}
+
+
+
+chisqClust1 <- chisq.test(table(data$gender, data$clust1))
+chisqClust2 <- chisq.test(table(data$gender, data$clust2))
+chisqClust3 <- chisq.test(table(data$gender, data$clust3))
 
 
 
@@ -214,13 +219,14 @@ chisqSexy <- chisq.test(table(data$gender, data$oneSexy))
 ### Plotting ###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
+#clusters aren't mapping on in the right order! double check centers with graph after running
 meanTrait <- c(g1m, g2m, g3m)
 mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
 trait <- c(rep(c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence"), 3))  
 plotting <- data.frame(meanTrait, mateType, trait)
-kfitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
+kFitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
-  theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Relative Desired Trait Level") +
+  theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Desired Trait Level") +
   scale_fill_discrete(name = "Trait")
 
 
@@ -235,6 +241,36 @@ biSamp <- table(data$sex_orient)
 ##get only bi dataframe
 biData <- subset(data, data$sex_orient == 3)
 
+biSampGender <- table(biData$gender) #22 women, 9 men
+
+##get sameOrDiff as function of gender
+biGenderDiff<-table(biData$sameOrDiff,biData$gender)
+
+
+##Computing average differentness
+biAvgDiff <- mean(biData$sameOrDiff) ##way higher than reg avg diff
+
+### CHI SQUARE -- some use Fisher's exact test since some clusters are rare###
+
+#are men and women are choosing combos of partner orange and blue at diff rates?
+
+chisqSexOrient <-chisq.test(table(data$sex_orient,data$kFitab)) #error bc size too small
+#fisherSexOrient <- fisher.test(table(data$sex_orient, data$kFitab))
+#get error with Fisher's test
+
+#are bi men and women choosing combos at diff rates
+
+chisqGenderBi <- chisq.test(table(biData$gender, biData$kFitab))
+#fisherGenderBi <- fisher.test(table(biData$gender, biData$kFitab))
+
+
+
+##in bisexual participants, do preferences for partner orange predict preferences for partner blue?
+chisqClustBi<-chisq.test(table(biData$blueClust, biData$orangeClust)) 
+#fisherClustBi <- fisher.test(table(biData$blueClust, biData$orangeClust))
+
+##raw numbers in each cluster combo by gender
+clustComboGenderBi<-table(biData$blueClust,biData$orangeClust,biData$gender)
 
 
 
