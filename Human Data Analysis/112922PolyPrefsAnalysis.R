@@ -14,7 +14,7 @@ set.seed(112822)
 
 
 ###load data###
-data <- read.csv("Human Data/Processed Data/Processed Data20221129 152029.csv")
+data <- read.csv("Human Data/Processed Data/Processed Data20230108 181609.csv")
 
 
 #Remove NAs ###
