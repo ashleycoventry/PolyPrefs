@@ -9,7 +9,7 @@ library(car)
 
 ###load data###
 #deleted fake generated data in excel file already
-data<-read.csv(file.choose())
+data<-read.csv("Human Data/Raw Data/11.28.PolyPrefs2Data.csv")
 
 
 ###eliminate title rows 
@@ -17,17 +17,14 @@ data<-data[-c(1:2),]
 
 
 ###eliminate unnecessary columns
-data<-data[,18:116]
+data<-data[,18:117]
   
 
 ###eliminate potential bots based on written responses
+#was coded --> column "textQuality" added, 1 = bot, 0 = not
+data <- subset(data, data$textQuality != "1") 
 
-##eliminate obvious gibberish/bots 
-##will need to be coded## --> column "textquality" will be added
-#data <- subset(data, data$textquality != "b") ##b = data coded as bot
-
-
-###also look for and eliminate duplicate responses in free responses since those are unlikely to be different people
+###also eliminate duplicate responses since those are likely to be same person
 
 #change blank responses to NA
 for(i in 1:NROW(data)){
