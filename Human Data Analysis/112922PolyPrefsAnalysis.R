@@ -99,7 +99,7 @@ data$orangeClust<-longData$kFitab[longData$partner=="idealOrange"]
 
 ##Determine for each participant whether their orange and blue partners are in the same cluster
 #same = 1, diff = 0
-data$sameOrDiff<-apply(data[,132:133],1,function(x)
+data$sameOrDiff<-apply(data[,133:134],1,function(x)
   sum(duplicated(x))
 )
 
@@ -112,7 +112,7 @@ avgDiff <- mean(data$sameOrDiff)
 
 ###create variable listing cluster of each partner 
 
-data$kFitab<-apply(data[,132:133],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
+data$kFitab<-apply(data[,133:134],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
 
 
 ### CHI SQUARE -- some use Fisher's exact test since some clusters are rare###
@@ -142,7 +142,7 @@ nullDistAvg <- data.frame(matrix(0,1,10000))
 for(a in 1:10000){
   #creating vector of clusters that are random, keeping proportions of each group the same
   nullAb<- sample(data$kFitab)
-  cols <- c(1, 2, 5, 102)
+  cols <- c(1, 2, 5, 103)
   dataNull <- cbind(data[,cols], nullAb)  
   #split kFitab into kFita and kFitb so we can compare sameOrDiff
   dataNull[c('kFita', 'kFitb')] <- str_split_fixed(dataNull$nullAb, ',', 2)
