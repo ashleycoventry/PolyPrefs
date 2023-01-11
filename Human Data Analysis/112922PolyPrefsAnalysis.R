@@ -251,22 +251,20 @@ biAvgDiff <- mean(biData$sameOrDiff) ##way higher than reg avg diff
 
 ### CHI SQUARE -- some use Fisher's exact test since some clusters are rare###
 
-#are men and women are choosing combos of partner orange and blue at diff rates?
+#are bi men and women are choosing combos of partner orange and blue at diff rates than het folks?
 
 chisqSexOrient <-chisq.test(table(data$sex_orient,data$kFitab)) #error bc size too small
 #fisherSexOrient <- fisher.test(table(data$sex_orient, data$kFitab))
 #get error with Fisher's test
 
-#are bi men and women choosing combos at diff rates
+#are bi men and bi women choosing combos at diff rates
 
-chisqGenderBi <- chisq.test(table(biData$gender, biData$kFitab))
-#fisherGenderBi <- fisher.test(table(biData$gender, biData$kFitab))
+fisherGenderBi <- fisher.test(table(biData$gender, biData$kFitab))
 
 
 
 ##in bisexual participants, do preferences for partner orange predict preferences for partner blue?
-chisqClustBi<-chisq.test(table(biData$blueClust, biData$orangeClust)) 
-#fisherClustBi <- fisher.test(table(biData$blueClust, biData$orangeClust))
+fisherClustBi <- fisher.test(table(biData$blueClust, biData$orangeClust))
 
 ##raw numbers in each cluster combo by gender
 clustComboGenderBi<-table(biData$blueClust,biData$orangeClust,biData$gender)
