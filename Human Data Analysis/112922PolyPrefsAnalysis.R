@@ -64,7 +64,6 @@ longData$partner<-as.factor(ifelse(longData$partner==1,"idealBlue","idealOrange"
 kfitWss<-sapply(1:7,function(x) kmeans(longData[,5:11],x)$tot.withinss)
 
 #scree plot
-##note: qplot isn't working
 screePlot<-qplot(1:7,kfitWss)
 
 
@@ -163,11 +162,11 @@ nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975))
 nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
 
 ##see proportion of null dist values that are smaller than our avgdiff 
-propDiff <- sum(unlist(nullDistAvg) < avgdiff) 
+propDiff <- sum(unlist(nullDistAvg) < avgDiff) 
 
 
 #convert to p-value, divide by number of shuffles (from for loop)
-pValueDiff <- sum(unlist(nullDistAvg) < avgdiff) /10000 
+pValueDiff <- sum(unlist(nullDistAvg) < avgDiff) /10000 
 
 
 ###How many ideal partners are in each cluster?
@@ -220,7 +219,7 @@ chisqClust3 <- chisq.test(table(data$gender, data$clust3))
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
 #clusters aren't mapping on in the right order! double check centers with graph after running
-meanTrait <- c(g1m, g2m, g3m)
+meanTrait <- c(clustCenters[1,], clustCenters[2,], clustCenters[3,])
 mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
 trait <- c(rep(c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence"), 3))  
 plotting <- data.frame(meanTrait, mateType, trait)
