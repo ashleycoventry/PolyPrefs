@@ -81,7 +81,6 @@ wssDiffs<-diff(kfitWss)
 
 
 ##Add the best classification to the original dataframe
-
 longData$kfit3<-kmeans(longData[,5:11],3)$cluster
 
 #Create vectors of preference means for each cluster
