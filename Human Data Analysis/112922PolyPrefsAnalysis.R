@@ -135,38 +135,32 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 ### PERMUTATIONS ###
 
 
-##create blank data frame to store null distribution averages
-nullDistAvg <- data.frame(matrix(0,1,10000))
+##create a vector to store null distribution averages
+nullDistAvg <- rep(0,10000)
 
 ##for loop to generate data of null dist 
 for(a in 1:10000){
-  #creating vector of clusters that are random, keeping proportions of each group the same
-  nullAb<- sample(data$kFitab)
-  cols <- c(1, 2, 5, 103)
-  dataNull <- cbind(data[,cols], nullAb)  
-  #split kFitab into kFita and kFitb so we can compare sameOrDiff
-  dataNull[c('kFita', 'kFitb')] <- str_split_fixed(dataNull$nullAb, ',', 2)
+  
+  aNull<-sample(data$blueClust)
+  bNull<-sample(data$orangeClust)
+  
   #Compute sameordiff
-  dataNull$sameOrDiff<-ifelse(dataNull$kFita == dataNull$kFitb, 0, 1)
-  #Computing average differentness
-  avgDiffNull <- mean(dataNull$sameOrDiff)
-  #stat we want to save in the matrix
-  nullDistAvg[1,a]<-avgDiffNull
+  sodNull<-ifelse(aNull==bNull, 0, 1)
+  
+  #Compute and saving average differentness
+  nullDistAvg[a]<-mean(sodNull)
+  
 }
 
 
 
 ##see whether we are in extremes of null dist (compare output to our avgdiff)
 #getting errors now out of the blue -- maybe new update?
-nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975)) 
-nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
+nullDistHigh<-quantile(nullDistAvg[1:10000],c(0.975)) 
+nullDistLow<-quantile(nullDistAvg[1:10000],c(0.025)) 
 
-##see proportion of null dist values that are smaller than our avgdiff 
-propDiff <- sum(unlist(nullDistAvg) < avgDiff) 
-
-
-#convert to p-value, divide by number of shuffles (from for loop)
-pValueDiff <- sum(unlist(nullDistAvg) < avgDiff) /10000 
+#Compute p-value comparing observed sameordiff to null distribution
+pValueDiff <- sum(nullDistAvg < avgDiff) /10000 
 
 
 ###How many ideal partners are in each cluster?
