@@ -132,12 +132,7 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 
-### PERMUTATIONS ###
-
-
-
-##create blank data frame to store null distribution averages
-nullDistAvg <- rep(0,100000)
+### Permuation Analysis ###
 
 
 ##create a vector to store null distribution averages
