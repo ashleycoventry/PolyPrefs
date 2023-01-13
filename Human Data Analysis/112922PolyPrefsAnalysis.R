@@ -135,11 +135,16 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 ### PERMUTATIONS ###
 
 
+
 ##create blank data frame to store null distribution averages
 nullDistAvg <- rep(0,100000)
 
+
+##create a vector to store null distribution averages
+nullDistAvg <- rep(0,10000)
+
 ##for loop to generate data of null dist 
-for(a in 1:100000){
+for(a in 1:10000){
   
   aNull<-sample(data$blueClust)
   bNull<-sample(data$orangeClust)
@@ -154,15 +159,14 @@ for(a in 1:100000){
 
 
 
-
 ##see whether we are in extremes of null dist (compare output to our avgdiff)
-#getting errors now out of the blue -- maybe new update?
+
 nullDistHigh<-quantile(nullDistAvg[1:100000],c(0.975)) 
 nullDistLow<-quantile(nullDistAvg[1:100000],c(0.025)) 
 
 
 #Compute p-value comparing observed sameordiff to null distribution
-pValueDiff <- sum(nullDistAvg < avgDiff) /10000  #this 
+pValueDiff <- sum(nullDistAvg < avgDiff) /10000  
 
 
 ###How many ideal partners are in each cluster?
