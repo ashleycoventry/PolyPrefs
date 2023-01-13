@@ -73,12 +73,12 @@ wssDiffs<-diff(kfitWss)
 
 ##Add this classification to the original dataframe
 
-longData$kFitab<-kmeans(longData[,5:11],3)$cluster
+kFit<-kmeans(longData[,5:11],3)
+longData$kFitab <- kFit$cluster
 
 
 ##Create vectors of preference means for each cluster (without age)
-#note: idk how this works instead of the indiv mean calculations we did
-clustCenters<-kmeans(longData[,5:11],3)$centers
+clustCenters<-kFit$centers
 
 ##Look at gender breakdown by cluster #1 = women, #2 = men
 clustGender<-table(longData$gender,longData$kFitab)
@@ -121,7 +121,7 @@ data$kFitab<-apply(data[,133:134],1,function(x) paste0(sort(as.numeric(x)),colla
 
 chisqGender<-chisq.test(table(data$gender,data$kFitab))
 #fisherGender <- fisher.test(table(data$gender, data$kFitab))
-  #get error with Fisher's test
+  #get error with Fisher's test and chi square
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
@@ -136,37 +136,33 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 ##create blank data frame to store null distribution averages
-nullDistAvg <- data.frame(matrix(0,1,10000))
+nullDistAvg <- rep(0,100000)
 
 ##for loop to generate data of null dist 
-for(a in 1:10000){
-  #creating vector of clusters that are random, keeping proportions of each group the same
-  nullAb<- sample(data$kFitab)
-  cols <- c(1, 2, 5, 103)
-  dataNull <- cbind(data[,cols], nullAb)  
-  #split kFitab into kFita and kFitb so we can compare sameOrDiff
-  dataNull[c('kFita', 'kFitb')] <- str_split_fixed(dataNull$nullAb, ',', 2)
+for(a in 1:100000){
+  
+  aNull<-sample(data$blueClust)
+  bNull<-sample(data$orangeClust)
+  
   #Compute sameordiff
-  dataNull$sameOrDiff<-ifelse(dataNull$kFita == dataNull$kFitb, 0, 1)
-  #Computing average differentness
-  avgDiffNull <- mean(dataNull$sameOrDiff)
-  #stat we want to save in the matrix
-  nullDistAvg[1,a]<-avgDiffNull
+  sodNull<-ifelse(aNull==bNull, 0, 1)
+  
+  #Compute and saving average differentness
+  nullDistAvg[a]<-mean(sodNull)
+  
 }
+
 
 
 
 ##see whether we are in extremes of null dist (compare output to our avgdiff)
 #getting errors now out of the blue -- maybe new update?
-nullDistHigh<-quantile(nullDistAvg[,1:10000],c(0.975)) 
-nullDistLow<-quantile(nullDistAvg[,1:10000],c(0.025)) 
-
-##see proportion of null dist values that are smaller than our avgdiff 
-propDiff <- sum(unlist(nullDistAvg) < avgDiff) 
+nullDistHigh<-quantile(nullDistAvg[1:100000],c(0.975)) 
+nullDistLow<-quantile(nullDistAvg[1:100000],c(0.025)) 
 
 
-#convert to p-value, divide by number of shuffles (from for loop)
-pValueDiff <- sum(unlist(nullDistAvg) < avgDiff) /10000 
+#Compute p-value comparing observed sameordiff to null distribution
+pValueDiff <- sum(nullDistAvg < avgDiff) /10000  #this 
 
 
 ###How many ideal partners are in each cluster?
@@ -221,7 +217,7 @@ chisqClust3 <- chisq.test(table(data$gender, data$clust3))
 #clusters aren't mapping on in the right order! double check centers with graph after running
 meanTrait <- c(clustCenters[1,], clustCenters[2,], clustCenters[3,])
 mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
-trait <- c(rep(c("Attractiveness", "Resources", "Ambition", "Kindness", "Good in Bed", "Status", "Intelligence"), 3))  
+trait <- c(rep(c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources"), 3))  
 plotting <- data.frame(meanTrait, mateType, trait)
 kFitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
