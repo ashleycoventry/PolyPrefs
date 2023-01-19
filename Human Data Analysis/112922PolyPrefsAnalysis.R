@@ -136,10 +136,10 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 ##create a vector to store null distribution averages
-nullDistAvg <- rep(0,10000)
+nullDistAvg <- rep(0,100000)
 
 ##for loop to generate data of null dist 
-for(a in 1:10000){
+for(a in 1:100000){
   
   aNull<-sample(data$blueClust)
   bNull<-sample(data$orangeClust)
@@ -161,7 +161,7 @@ nullDistLow<-quantile(nullDistAvg[1:100000],c(0.025))
 
 
 #Compute p-value comparing observed sameordiff to null distribution
-pValueDiff <- sum(nullDistAvg < avgDiff) /10000  
+pValueDiff <- sum(nullDistAvg < avgDiff) /100000  
 
 
 ###How many ideal partners are in each cluster?
@@ -176,7 +176,7 @@ diffClust <- table(data$blueClust[data$sameOrDiff ==1])
 
 ###More Chi Squares: proportion of participants with at least 1 partner in specific clusters 
 
-##Create blank columns in dataWide
+##Create blank columns in data
 data$clust1 <- NA #for cluster 1
 data$clust2<- NA #for cluster 2
 data$clust3 <- NA #for cluster 3
@@ -222,6 +222,44 @@ kFitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
   theme_minimal(base_size = 15) + xlab("Type of Mate") + ylab("Desired Trait Level") +
   scale_fill_discrete(name = "Trait")
+
+
+##multipanel figure
+#first create individual plot for each cluster
+
+#cluster 1 (title will change based on clusters)
+meanTrait1 <- clustCenters[1,]
+trait1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting1 <- data.frame(meanTrait1, trait1)
+plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
+  ggtitle("Attractive & Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 2 
+meanTrait2 <- clustCenters[2,]
+trait2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting2 <- data.frame(meanTrait2, trait2)
+plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
+ggtitle("Smart and Kind") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 3 
+meanTrait3 <- clustCenters[3,]
+trait3 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting3 <- data.frame(meanTrait3, trait3)
+plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
+ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#combine clusters into one graph
+panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+
+
+
+
 
 
 
