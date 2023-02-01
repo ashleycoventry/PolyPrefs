@@ -27,6 +27,11 @@ data<- data[!nacheck,]
 #excluding people who don't identify as either men or women
 
 data<-data[data$gender<3,]
+data <- data[data$orange_gender <3,]
+data <- data[data$blue_gender <3,]
+
+#recoding gender to be 0 and 1 (move to processing script)
+data$gender <- ifelse(data$gender == 1, 0, 1)
 
 
 ###reshape data wide --> long and only keep columns relevant for kmeans
@@ -34,7 +39,8 @@ data<-data[data$gender<3,]
 #melt function to have two rows (1 for orange, 1 for blue) with each trait rating
 
 longData<-melt(as.data.table(data),id.vars=c("PIN","gender","age"),
-               measure.vars=list(c(14,21),
+               measure.vars=list(c(30,28),
+                                 c(14,21),
                                  c(15,22),
                                  c(16,23),
                                  c(17,24),
@@ -45,7 +51,7 @@ longData<-melt(as.data.table(data),id.vars=c("PIN","gender","age"),
 
 #Relabel columns
 
-colnames(longData)[4:11]<-c("partner","amb","attract",
+colnames(longData)[4:12]<-c("partner","idealGender","amb","attract",
                             "intel","sexy","kind",
                             "stat","finPros")
 
@@ -61,7 +67,7 @@ longData$partner<-as.factor(ifelse(longData$partner==1,"idealBlue","idealOrange"
 
 
 #extract kmeans wSs
-kfitWss<-sapply(1:7,function(x) kmeans(longData[,5:11],x)$tot.withinss)
+kfitWss<-sapply(1:7,function(x) kmeans(longData[,6:12],x)$tot.withinss)
 
 #scree plot
 screePlot<-qplot(1:7,kfitWss)
@@ -73,7 +79,7 @@ wssDiffs<-diff(kfitWss)
 
 ##Add this classification to the original dataframe
 
-kFit<-kmeans(longData[,5:11],3)
+kFit<-kmeans(longData[,6:12],3)
 longData$kFitab <- kFit$cluster
 
 
@@ -204,7 +210,14 @@ chisqClust1 <- chisq.test(table(data$gender, data$clust1))
 chisqClust2 <- chisq.test(table(data$gender, data$clust2))
 chisqClust3 <- chisq.test(table(data$gender, data$clust3))
 
+###Ideal gender analysis
 
+##fisher test
+fisherIdealGender <- fisher.test(table(longData$idealGender, longData$kFitab))
+idealGenderClust <- table(longData$idealGender, longData$kFitab)
+
+##logistic regression
+#gender and ideal gender as predictors and cluster as outcome
 
 
 
