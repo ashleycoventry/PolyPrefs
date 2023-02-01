@@ -86,7 +86,7 @@ longData$kFitab <- kFit$cluster
 ##Create vectors of preference means for each cluster (without age)
 clustCenters<-kFit$centers
 
-##Look at gender breakdown by cluster #1 = women, #2 = men
+##Look at gender breakdown by cluster
 clustGender<-table(longData$gender,longData$kFitab)
 
 ##compute variance between trait ratings for each cluster
