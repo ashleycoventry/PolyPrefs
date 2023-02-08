@@ -6,6 +6,7 @@
 ###load packages 
 library(psych) #for scree plot
 library(ggplot2) #For generating other plots
+library(ggpubr)
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
 
@@ -32,6 +33,8 @@ data <- data[data$blue_gender <3,]
 
 #recoding gender to be 0 and 1 (move to processing script)
 data$gender <- ifelse(data$gender == 1, 0, 1)
+data$orange_gender <- ifelse(data$orange_gender ==1, 0, 1)
+data$blue_gender <- ifelse(data$blue_gender ==1 , 0, 1)
 
 
 ###reshape data wide --> long and only keep columns relevant for kmeans
@@ -121,17 +124,16 @@ avgDiff <- mean(data$sameOrDiff)
 data$kFitab<-apply(data[,133:134],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
 
 
-### CHI SQUARE -- some use Fisher's exact test since some clusters are rare###
+### CHI SQUARE 
 
 #are men and women are choosing combos of partner orange and blue at diff rates?
 
 chisqGender<-chisq.test(table(data$gender,data$kFitab))
-#fisherGender <- fisher.test(table(data$gender, data$kFitab))
-  #get error with Fisher's test and chi square
+
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
-#fisherClust <- fisher.test(table(data$blueClust, data$orangeClust))
+
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
@@ -213,11 +215,23 @@ chisqClust3 <- chisq.test(table(data$gender, data$clust3))
 ###Ideal gender analysis
 
 ##fisher test
-fisherIdealGender <- fisher.test(table(longData$idealGender, longData$kFitab))
-idealGenderClust <- table(longData$idealGender, longData$kFitab)
+
+#partner blue
+fisherIdealGenderBlue <- fisher.test(table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])) 
+idealGenderClustBlue <- table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])
+
+#partner orange
+fisherIdealGenderOrange <- fisher.test(table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])) 
+idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])
+
+
+
 
 ##logistic regression
-#gender and ideal gender as predictors and cluster as outcome
+#predicting partner sex from cluster?
+
+logRegModel <- glm(idealGender ~ kFitab, data = longData) 
+#not right?
 
 
 
