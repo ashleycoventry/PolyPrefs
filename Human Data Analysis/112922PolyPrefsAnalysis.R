@@ -9,6 +9,7 @@ library(ggplot2) #For generating other plots
 library(ggpubr)
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
+library(lme4) #for the logistic regression
 
 ###set seed###
 set.seed(112822)
@@ -169,7 +170,7 @@ nullDistLow<-quantile(nullDistAvg[1:100000],c(0.025))
 
 
 #Compute p-value comparing observed sameordiff to null distribution
-pValueDiff <- sum(nullDistAvg < avgDiff) /100000  
+pValueDiff <- sum(nullDistAvg < avgDiff) /100000 #unlike in study 1, no more similar/diff than chance 
 
 
 ###How many ideal partners are in each cluster?
@@ -230,8 +231,9 @@ idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealO
 ##logistic regression
 #predicting partner sex from cluster?
 
-logRegModel <- glm(idealGender ~ kFitab, data = longData) 
-#not right?
+
+logRegModel <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family = "binomial") 
+
 
 
 
@@ -261,7 +263,7 @@ plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
-  ggtitle("Attractive & Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  ggtitle("Kind and Smart") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
@@ -270,7 +272,7 @@ plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
-ggtitle("Smart and Kind") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+ggtitle("Attractive and Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 3 
 meanTrait3 <- clustCenters[3,]
