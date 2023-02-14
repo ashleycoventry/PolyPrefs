@@ -135,7 +135,6 @@ chisqGender<-chisq.test(table(data$gender,data$kFitab))
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
 
-
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
@@ -232,7 +231,7 @@ idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealO
 #predicting partner sex from cluster?
 
 
-logRegModel <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family = "binomial") 
+logRegModelPsex <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family = "binomial") 
 
 
 
@@ -332,4 +331,137 @@ fisherClustBi <- fisher.test(table(biData$blueClust, biData$orangeClust))
 clustComboGenderBi<-table(biData$blueClust,biData$orangeClust,biData$gender)
 
 
+#######Sex-Separated Cluster Analyses##########
+
+###Women Only : K-Means Cluster Analysis###
+
+longDataF <- longData[longData$gender == 0]
+#extract kmeans wSs
+kfitWssF<-sapply(1:7,function(x) kmeans(longDataF[,6:12],x)$tot.withinss)
+
+#scree plot
+screePlotF<-qplot(1:7,kfitWssF)
+
+
+##compute differences in within ss across k for k-means clustering
+wssDiffsF<-diff(kfitWssF)
+
+
+##Add this classification to the original dataframe
+
+kFitF<-kmeans(longDataF[,6:12],3)
+longDataF$kFitF <- kFitF$cluster
+
+
+##Create vectors of preference means for each cluster (without age)
+clustCentersF<-kFitF$centers
+
+##Look at gender breakdown by cluster
+clustF<-table(longDataF$kFitF)
+
+##compute variance between trait ratings for each cluster
+#to see if maybe one cluster is more well rounded than others
+clustVarsF<-apply(clustCentersF,1,var)
+
+
+##plotting clusters (only women)
+
+#cluster 1 (title will change based on clusters)
+meanTrait1F <- clustCentersF[1,]
+trait1F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting1F <- data.frame(meanTrait1F, trait1F)
+plot1F <- ggplot(data=plotting1F, aes(x=trait1F, y=meanTrait1F)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
+  ggtitle("Kind and Rich (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 2 
+meanTrait2F <- clustCentersF[2,]
+trait2F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting2F <- data.frame(meanTrait2F, trait2F)
+plot2F <- ggplot(data=plotting2F, aes(x=trait2F, y=meanTrait2F)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
+  ggtitle("Kind and Sexy (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 3 
+meanTrait3F <- clustCentersF[3,]
+trait3F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting3F <- data.frame(meanTrait3F, trait3F)
+plot3F <- ggplot(data=plotting3F, aes(x=trait3F, y=meanTrait3F)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
+  ggtitle("Well-Rounded (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#Panel Plot
+panelPlotF<-ggarrange(plot1F,plot2F,plot3F,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+
+
+
+
+###Men only : K-Means Cluster Analysis
+
+###K-Means Cluster Analysis###
+
+longDataM <- longData[longData$gender == 1]
+
+#extract kmeans wSs
+kfitWssM<-sapply(1:7,function(x) kmeans(longDataM[,6:12],x)$tot.withinss)
+
+#scree plot
+screePlotM<-qplot(1:7,kfitWssM)
+
+
+##compute differences in within ss across k for k-means clustering
+wssDiffsM<-diff(kfitWssM)
+
+
+##Add this classification to the original dataframe
+
+kFitM<-kmeans(longDataM[,6:12],3)
+longDataM$kFitM <- kFitM$cluster
+
+
+##Create vectors of preference means for each cluster (without age)
+clustCentersM<-kFitM$centers
+
+##Look at gender breakdown by cluster
+clustM<-table(longDataM$kFitM)
+
+##compute variance between trait ratings for each cluster
+#to see if maybe one cluster is more well rounded than others
+clustVarsM<-apply(clustCentersM,1,var)
+
+
+##plotting clusters (only men)
+
+#cluster 1 (title will change based on clusters)
+meanTrait1M <- clustCentersM[1,]
+trait1M <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting1M <- data.frame(meanTrait1M, trait1M)
+plot1M <- ggplot(data=plotting1M, aes(x=trait1M, y=meanTrait1M)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
+  ggtitle("Kind and Smart (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 2 
+meanTrait2M <- clustCentersM[2,]
+trait2M <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting2M <- data.frame(meanTrait2M, trait2M)
+plot2M <- ggplot(data=plotting2M, aes(x=trait2M, y=meanTrait2M)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
+  ggtitle("Attractive and Good in Bed (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 3 
+meanTrait3M <- clustCentersM[3,]
+trait3M <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting3M <- data.frame(meanTrait3M, trait3M)
+plot3M <- ggplot(data=plotting3M, aes(x=trait3M, y=meanTrait3M)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
+  ggtitle("Well-Rounded (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#panel plot
+panelPlotM<-ggarrange(plot1M,plot2M,plot3M,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
