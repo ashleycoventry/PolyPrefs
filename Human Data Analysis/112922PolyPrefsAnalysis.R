@@ -65,8 +65,6 @@ longData$partner<-as.factor(ifelse(longData$partner==1,"idealBlue","idealOrange"
 
 
 
-
-
 ###K-Means Cluster Analysis###
 
 
@@ -286,12 +284,41 @@ ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x
 panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
 
+###Mate Point Allocation###
+
+#question: are people who want partners in different clusters allocating a sig different # of points to each partner?
+
+##calculate total # points allocated per row for traits
+
+longData$total <- NA
+for(i in 1:nrow(longData)) {
+  longData$total[i] <- sum(longData[i,6:12])
+}
+
+
+##compare between partner blue and orange for each participant
+
+longData$alloComp <- NA
+for(i in 1:nrow(longData)){
+  #make vector with partner orange and partner blue allocation
+  compare <- c(longData$total[longData$PIN[i],]) #doesn't work:/
+  #compare 2 values and determine which is larger
+  #output 0 into new column if same allocation, 1 if less, 2 if more
+  longData$alloComp <- ifelse(compare[i,1] > compare[i,2], 2, 
+                              ifelse(compare[i,1] = compare[i,2], 0, 1))
+  
+}
+  
+  
+  
+  
+  
 
 
 
 
 
-
+###################Supplemental Analyses################
 
 #######Bisexual Poly Prefs #######
 
@@ -349,7 +376,7 @@ wssDiffsF<-diff(kfitWssF)
 
 ##Add this classification to the original dataframe
 
-kFitF<-kmeans(longDataF[,6:12],3)
+kFitF<-kmeans(longDataF[,6:12],4)
 longDataF$kFitF <- kFitF$cluster
 
 
@@ -372,8 +399,8 @@ trait1F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindn
 plotting1F <- data.frame(meanTrait1F, trait1F)
 plot1F <- ggplot(data=plotting1F, aes(x=trait1F, y=meanTrait1F)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
-  ggtitle("Kind and Rich (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,9) +
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 2 
 meanTrait2F <- clustCentersF[2,]
@@ -381,8 +408,8 @@ trait2F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindn
 plotting2F <- data.frame(meanTrait2F, trait2F)
 plot2F <- ggplot(data=plotting2F, aes(x=trait2F, y=meanTrait2F)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
-  ggtitle("Kind and Sexy (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 3 
 meanTrait3F <- clustCentersF[3,]
@@ -391,10 +418,21 @@ plotting3F <- data.frame(meanTrait3F, trait3F)
 plot3F <- ggplot(data=plotting3F, aes(x=trait3F, y=meanTrait3F)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
-  ggtitle("Well-Rounded (Only Women)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 4 
+meanTrait4F <- clustCentersF[4,]
+trait4F <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting4F <- data.frame(meanTrait4F, trait4F)
+plot4F <- ggplot(data=plotting4F, aes(x=trait4F, y=meanTrait4F)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "blue")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+
 
 #Panel Plot
-panelPlotF<-ggarrange(plot1F,plot2F,plot3F,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlotF<-ggarrange(plot1F,plot2F,plot3F, plot4F, labels=c("A","B","C","D"), nrow=1, ncol=4,font.label = list(size = 14, color = "black"))
 
 
 
@@ -441,8 +479,8 @@ trait1M <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindn
 plotting1M <- data.frame(meanTrait1M, trait1M)
 plot1M <- ggplot(data=plotting1M, aes(x=trait1M, y=meanTrait1M)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
-  ggtitle("Kind and Smart (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,9) +
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 2 
 meanTrait2M <- clustCentersM[2,]
@@ -450,8 +488,8 @@ trait2M <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindn
 plotting2M <- data.frame(meanTrait2M, trait2M)
 plot2M <- ggplot(data=plotting2M, aes(x=trait2M, y=meanTrait2M)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
-  ggtitle("Attractive and Good in Bed (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #cluster 3 
 meanTrait3M <- clustCentersM[3,]
@@ -460,7 +498,7 @@ plotting3M <- data.frame(meanTrait3M, trait3M)
 plot3M <- ggplot(data=plotting3M, aes(x=trait3M, y=meanTrait3M)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,9) +
-  ggtitle("Well-Rounded (Men)") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
 
 #panel plot
 panelPlotM<-ggarrange(plot1M,plot2M,plot3M,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
