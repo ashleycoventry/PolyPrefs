@@ -288,26 +288,44 @@ panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,fon
 
 #question: are people who want partners in different clusters allocating a sig different # of points to each partner?
 
-##calculate total # points allocated per row for traits
+##calculate total # of points allocated per row for traits
 
-longData$total <- NA
-for(i in 1:nrow(longData)) {
-  longData$total[i] <- sum(longData[i,6:12])
+#for partner Orange
+data$totalOrange <- NA
+for(i in 1:nrow(data)) {
+  data$totalOrange[i] <- sum(data[i, 21:27])
+}
+
+#for partner Blue
+data$totalBlue <- NA
+for(i in 1:nrow(data)) {
+  data$totalBlue[i] <- sum(data[i, 14:20])
 }
 
 
 ##compare between partner blue and orange for each participant
+data$alloComp <- NA
 
-longData$alloComp <- NA
-for(i in 1:nrow(longData)){
-  #make vector with partner orange and partner blue allocation
-  compare <- c(longData$total[longData$PIN[i],]) #doesn't work:/
-  #compare 2 values and determine which is larger
-  #output 0 into new column if same allocation, 1 if less, 2 if more
-  longData$alloComp <- ifelse(compare[i,1] > compare[i,2], 2, 
-                              ifelse(compare[i,1] = compare[i,2], 0, 1))
-  
+#if blue > orange, give value 2; if blue = orange, give value 1
+#if neither is true ( so blue < orange), give 0. 
+for(i in 1:nrow(data)){
+  if(data$totalBlue[i] > data$totalOrange[i]) {
+    data$alloComp[i] <- 2 
+  } else {
+    if(data$totalBlue[i] == data$totalOrange[i]) {
+      data$alloComp[i] <- 1
+    } else{
+      data$alloComp[i] <- 0 
+      }
+    }
 }
+
+##look at cluster and alloComp values?
+alloTable <- table(data$alloComp)
+alloClust <- table(data$alloComp, data$blueClust)
+#ok so idk how to analyze --> do i need to just add to longData?
+
+
   
   
   
@@ -383,7 +401,7 @@ longDataF$kFitF <- kFitF$cluster
 ##Create vectors of preference means for each cluster (without age)
 clustCentersF<-kFitF$centers
 
-##Look at gender breakdown by cluster
+##Look at cluster breakdown
 clustF<-table(longDataF$kFitF)
 
 ##compute variance between trait ratings for each cluster
