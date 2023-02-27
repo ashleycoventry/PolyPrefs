@@ -306,32 +306,66 @@ for(i in 1:nrow(data)) {
 ##compare between partner blue and orange for each participant
 data$alloComp <- NA
 
-#if blue > orange, give value 2; if blue = orange, give value 1
-#if neither is true ( so blue < orange), give 0. 
+#if blue > orange, give value 1; if blue = orange, give value 0
+#if neither is true ( so blue < orange), give -1. 
 for(i in 1:nrow(data)){
   if(data$totalBlue[i] > data$totalOrange[i]) {
-    data$alloComp[i] <- 2 
+    data$alloComp[i] <- 1 
   } else {
     if(data$totalBlue[i] == data$totalOrange[i]) {
-      data$alloComp[i] <- 1
+      data$alloComp[i] <- 0
     } else{
-      data$alloComp[i] <- 0 
+      data$alloComp[i] <- -1 
       }
     }
 }
 
-##look at cluster and alloComp values?
-alloTable <- table(data$alloComp)
-alloClust <- table(data$alloComp, data$blueClust)
-#ok so idk how to analyze --> do i need to just add to longData?
+
+#create dataframe excluding rows where alloComp = 0 (bc we just want to look at unequal distribution for now)
+alloData <- data[data$alloComp != 0,]
 
 
+#create columns with cluster of high allocation partner and cluster of low allocation partner
+
+alloData$highClust <- NA
+alloData$lowClust <- NA
+
+for(i in 1:nrow(alloData)){
+  if(alloData$alloComp[i] == 1){
+    alloData$highClust[i] <- alloData$blueClust[i]
+  } else {
+    alloData$highClust[i] <- alloData$orangeClust[i]
+  }
+    
+}
+
+for(i in 1:nrow(alloData)){
+  if(alloData$alloComp[i] == -1){
+    alloData$lowClust[i] <- alloData$blueClust[i]
+  } else {
+    alloData$lowClust[i] <- alloData$orangeClust[i]
+  }
   
+}
+
+#run chisq test with high allo x low allo 
+chisqAllo <- chisq.test((table(alloData$highClust, alloData$lowClust))) #significant
   
-  
-  
+#table (1st variable listed is down side, 2nd is across top of table)
+alloTable <- table(alloData$highClust, alloData$lowClust)
+
   
 
+#run fisher test for allo of only women
+fisherAlloF <- fisher.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0]))) #significant
+
+alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])
+
+
+#run chisq test for allo of only men
+fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) #significant
+
+alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
 
 
 
