@@ -1,4 +1,4 @@
-#############Polyamorous Mate Preferences -- Budget Allocation: Analysis Script #################
+#############Polyamorous Mate Preferences 2 -- Budget Allocation: Analysis Script #################
 ####Ashley J Coventry, Tamsin German, Dan Conroy-Beam########
 
 
@@ -230,7 +230,7 @@ idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealO
 
 
 logRegModelPsex <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family = "binomial") 
-
+logRegModelSex <- glmer(gender ~kFitab + (1|PIN), data= longData, family = "binomial")
 
 
 
@@ -366,6 +366,8 @@ alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[all
 fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) #significant
 
 alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
+
+
 
 
 
