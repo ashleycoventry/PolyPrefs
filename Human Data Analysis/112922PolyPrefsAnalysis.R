@@ -16,7 +16,7 @@ set.seed(112822)
 
 
 ###load data###
-data <- read.csv("Human Data/Processed Data/Processed Data20230108 181609.csv")
+data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data/Processed Data20230108 181609.csv")
 
 
 #Remove NAs ###
@@ -282,6 +282,47 @@ ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x
 
 #combine clusters into one graph
 panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+
+######Mean-Centered Plots
+
+##graphs with scores centered around 0 (mean centering scores?)
+
+#subtract mean of each row from values in each row
+clustCentersC <- apply(clustCenters, 1, function(row) {
+  row - mean(row)
+})
+clustCentersC <- t(clustCentersC)
+
+#cluster 1 (title will change based on clusters)
+meanTrait1C <- clustCentersC[1,]
+trait1C <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting1C <- data.frame(meanTrait1C, trait1C)
+plot1C <- ggplot(data=plotting1C, aes(x=trait1C, y=meanTrait1C)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(-4,4) +
+  ggtitle("Kind and Smart") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 2 
+meanTrait2C <- clustCentersC[2,]
+trait2C <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting2C <- data.frame(meanTrait2C, trait2C)
+plot2C <- ggplot(data=plotting2C, aes(x=trait2C, y=meanTrait2C)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(-4,4) +
+  ggtitle("Attractive and Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#cluster 3 
+meanTrait3C <- clustCentersC[3,]
+trait3C <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting3C <- data.frame(meanTrait3C, trait3C)
+plot3C <- ggplot(data=plotting3C, aes(x=trait3C, y=meanTrait3C)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(-4,4) +
+  ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+
+#combine clusters into one graph
+panelPlotC<-ggarrange(plot2C,plot1C,plot3C,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+
 
 
 ###Mate Point Allocation###

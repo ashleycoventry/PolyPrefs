@@ -8,7 +8,6 @@ library(car)
 
 
 ###load data###
-#deleted fake generated data in excel file already
 data<-read.csv("Human Data/Raw Data/11.28.PolyPrefs2Data.csv")
 
 
