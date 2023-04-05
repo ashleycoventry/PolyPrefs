@@ -22,7 +22,7 @@ data<-data[-c(1:2),]
 
 
 ###eliminate unnecessary columns
-data<-data[,18:127]
+data<-data[,15:124]
 
 
 
@@ -86,6 +86,8 @@ data <- subset(data, data$attn_check10 == "11" | data$attn_check10 == "")
   #keeping everyone who answered correctly or whose response is blank (didn't get question)
 data <- subset(data, data$attn_check10.1 == "10" | data$attn_check10.1 == "")
 
+#attn check brings 297 initial observation to 231 (eliminates 66 responses)
+
 ###create pin
 
 data$PIN<-as.character(sample(1:nrow(data)))
@@ -112,42 +114,42 @@ data[,c(33:34, 36:47, 57:58, 60:71, 75:88, 92:104, 106)] <- (data[,c(33:34, 36:4
 #1 composite for the 2 questions of each trait
 #create data frame of just trait ratings 
 
-#ratings <- data[,c(31:44, 49:62, 66:79, 83:96)]
+ratings <- data[,c(33:34, 36:47, 57:58, 60:71, 75:88, 92:104, 106)]
 
 ##compute composite ratings 
 #go into ratings and take first two columns and first row and calculate mean
 #do this for all rows and pairs of columns in ratings
-#comps <- sapply(seq(1,56,2), function(x) rowMeans(ratings[,x:(x+1)]))
+comps <- sapply(seq(1,56,2), function(x) rowMeans(ratings[,x:(x+1)]))
 
 #take every other column name in ratings and put in vector
-#compNames <- colnames(ratings)[seq(1,56,2)]
+compNames <- colnames(ratings)[seq(1,56,2)]
 
 #eliminate the 1 from each column name and replace with nothing (e.g. intell_1 to intell)
-#compNames<-gsub("1","",compNames)
+compNames<-gsub("1","",compNames)
 
 #add compnames as column names in comps dataset
-#colnames(comps)<- compNames
+colnames(comps)<- compNames
 
 #add comps data set to data
-#data<-cbind(data, comps)
+data<-cbind(data, comps)
 
 
 ###create group variable 
 #single monogamous, partnered monogamous, single polyamorous, one partner polyamorous more than one partner polyamorous
-#data$group<-
-  #ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
-         #ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
-                #ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
-                       #seems like this lumps in "prefer not to say" with ppl with multiple partners --problem?
-                      # ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
-#issue with else output bc includes "prefer not to say" responses
+data$group<-
+  ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
+         ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
+                ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
+                       #seems like this lumps in "prefer not to say" with ppl with multiple partners --problem? (no one answered pref not to say though)
+                      ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
+
 
 
 
 ###save processed dataframe as a csv
-#date<-format(Sys.time(),format="%Y%m%d %H%M%S")
+date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-#write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data",date,".csv"), row.names = FALSE)
 
 
 
