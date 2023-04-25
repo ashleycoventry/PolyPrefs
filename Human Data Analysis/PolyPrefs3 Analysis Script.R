@@ -256,27 +256,30 @@ meanTrait1 <- clustCenters[1,]
 trait1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
 plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "red")+
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3")+
+  geom_hline(yintercept = mean(meanTrait1), color="black") +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level")  +ylim(0,8) +
-  ggtitle("Attractive and Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  ggtitle("Attractive and Good in Bed") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 0))
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
 trait2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
 plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "forestgreen")+ 
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4")+ 
+  geom_hline(yintercept = mean(meanTrait1), color="black") +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
-  ggtitle("Wealthy and Kind") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  ggtitle("Wealthy and Kind") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 0))
 
 #cluster 3 
 meanTrait3 <- clustCenters[3,]
 trait3 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
 plotting3 <- data.frame(meanTrait3, trait3)
 plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "purple")+ 
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+ 
+  geom_hline(yintercept = mean(meanTrait1), color="black") +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Relative Desired Trait Level") +ylim(0,8) +
-  ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  ggtitle("Well-Rounded") +theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 0))
 
 #combine clusters into one graph
 panelPlot<-ggarrange(plot1,plot2,plot3,labels=c("A","B","C"), nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
