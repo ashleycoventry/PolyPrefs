@@ -107,7 +107,7 @@ data$orangeClust<-longData$kFitab[longData$partner=="idealOrange"]
 
 ##Determine for each participant whether their orange and blue partners are in the same cluster
 #same = 1, diff = 0
-data$sameOrDiff<-apply(data[,133:134],1,function(x)
+data$sameOrDiff<-apply(data[,132:133],1,function(x)
   sum(duplicated(x))
 )
 
@@ -120,7 +120,7 @@ avgDiff <- mean(data$sameOrDiff)
 
 ###create variable listing cluster of each partner 
 
-data$kFitab<-apply(data[,133:134],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
+data$kFitab<-apply(data[,132:133],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
 
 
 ### CHI SQUARE 
