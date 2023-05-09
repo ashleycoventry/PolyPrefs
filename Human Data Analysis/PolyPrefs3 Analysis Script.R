@@ -282,7 +282,31 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
   theme(axis.text.x = element_text(angle = 90))
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot3,plot1,plot2, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot1, plot2, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+
+
+
+###Investment Questions
+
+##does financial investment in partners differ based on blue cluster
+
+#make cluster a factor
+data$blueClust <- as.factor(data$blueClust)
+data$orangeClust <- as.factor(data$orangeClust)
+
+#anova comparing means of fin_invest for each cluster. 
+#if a mean is lower, it means more investment in partner blue 
+#7 point scale: 1 = all in partner blue, 7 = all in partner orange
+
+finInvestBlue <- aov(fin_invest ~ blueClust, data = data) #sig
+tukeyFinInvestBlue <- TukeyHSD(finInvestBlue) 
+
+finInvestOrange <- aov(fin_invest ~ orangeClust, data = data) #sig
+tukeyFinInvestOrange <- TukeyHSD(finInvestOrange)
+
+
+#in conclusion, i have no idea how to interpret this... :(
+
 
 
 
