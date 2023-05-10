@@ -231,7 +231,48 @@ logRegModelPsex <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family
 logRegModelSex <- glmer(gender ~kFitab + (1|PIN), data= longData, family = "binomial")
 
 
+###Investment Questions Analysis###
 
+##Q1: is there a greater deviation from the center (equal invest.) if 2 partners are in diff clusters
+
+##make long dataframe with investment info
+#melt function to have two rows (1 for orange, 1 for blue) with each trait rating
+
+investData<-melt(as.data.table(data),id.vars=c("PIN", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
+               measure.vars=list(c(143,144))) #clust (first listed = blue, second = orange)
+
+#renaming columns
+colnames(investData) <- c("PIN", "finInvest", "timeInvest", "emotClose", "sameOrDiff", "partner", "cluster")
+
+##calculating deviation from equal invest
+investData <- investData %>% 
+  mutate(finDeviation = abs(finInvest - 4),
+         timeDeviation = abs(timeInvest - 4),
+         emotDeviation = abs(emotClose - 4))
+
+
+#look at deviation descriptively
+summary(investData$finDeviation)
+table(investData$finDeviation)
+table(investData[investData$sameOrDiff == 1]$finDeviation)
+table(investData[investData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
+
+summary(investData$timeDeviation)
+table(investData$timeDeviation)
+table(investData[investData$sameOrDiff == 1]$timeDeviation)
+table(investData[investData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
+
+summary(investData$emotDeviation)
+table(investData$emotDeviation)
+table(investData[investData$sameOrDiff == 1]$emotDeviation)
+table(investData[investData$sameOrDiff == 0]$emotDeviation) #more deviation if clusters are different
+
+#anova comparing deviation for same vs diff clusters
+finInvestAnova <- aov(finDeviation ~ sameOrDiff, data = investData)
+
+timeInvestAnova <- aov(timeDeviation ~ sameOrDiff, data = investData)
+
+emotCloseAnova <- aov(emotDeviation ~ sameOrDiff, data = investData)
 
 
 ### Plotting ###
