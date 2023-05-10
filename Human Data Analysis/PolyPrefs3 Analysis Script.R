@@ -122,7 +122,7 @@ data$kFitab<-apply(data[,143:144],1,function(x) paste0(sort(as.numeric(x)),colla
 
 #are men and women are choosing combos of partner orange and blue at diff rates?
 
-#fisherGender <- fisher.test(table(data$gender, data$kFitab))
+fisherGender <- fisher.test(table(data$gender, data$kFitab), simulate.p.value = TRUE)
   #2,2 for men has only 2 people so too small for chi sq
   #workplace size issue 
 
