@@ -275,6 +275,30 @@ timeInvestAnova <- aov(timeDeviation ~ sameOrDiff, data = investData)
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff, data = investData)
 
 
+##Q2: does this investment vary by cluster and also cluster of other partner?
+data$blueClust <- as.factor(data$blueClust)
+data$orangeClust <- as.factor(data$orangeClust)
+
+#fin invest variance based on cluster type
+finInvestClust <- aov(fin_invest ~ blueClust*orangeClust, data = data) #no sig int
+finInvestClust2 <- aov(fin_invest ~ blueClust+orangeClust, data = data) #to do: subset by m vs f
+
+tukeyFinInvestClust <- TukeyHSD(finInvestClust2)
+
+
+#time invest variance based on cluster type
+timeInvestClust <- aov(time_invest ~ blueClust*orangeClust, data = data) #no sig int
+timeInvestClust2 <- aov(time_invest ~ blueClust+orangeClust, data = data) #to do: subset by m vs f
+
+tukeyTimeInvestClust <- TukeyHSD(timeInvestClust2)
+
+#emotional closeness variance based on cluster type
+emotCloseClust <- aov(emot_close ~ blueClust*orangeClust, data = data) #sig interaction
+
+tukeyEmotCloseClust <- TukeyHSD(emotCloseClust)
+
+
+
 ### Plotting ###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
