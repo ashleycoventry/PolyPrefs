@@ -238,14 +238,29 @@ logRegModelSex <- glmer(gender ~kFitab + (1|PIN), data= longData, family = "bino
 ##make long dataframe with investment info
 #melt function to have two rows (1 for orange, 1 for blue) with each trait rating
 
-investData<-melt(as.data.table(data),id.vars=c("PIN", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
+investData<-melt(as.data.table(data),id.vars=c("PIN", "gender", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
                measure.vars=list(c(143,144))) #clust (first listed = blue, second = orange)
 
 #renaming columns
-colnames(investData) <- c("PIN", "finInvest", "timeInvest", "emotClose", "sameOrDiff", "partner", "cluster")
+colnames(investData) <- c("PIN", "gender", "finInvest", "timeInvest", "emotClose", "sameOrDiff", "partner", "cluster")
+
+#create male v female datasets
+maleInvestData <- subset(investData, gender == 1)
+femaleInvestData <- subset(investData, gender ==0)
 
 ##calculating deviation from equal invest
 investData <- investData %>% 
+  mutate(finDeviation = abs(finInvest - 4),
+         timeDeviation = abs(timeInvest - 4),
+         emotDeviation = abs(emotClose - 4))
+
+#for men
+maleInvestData <- maleInvestData %>% 
+  mutate(finDeviation = abs(finInvest - 4),
+         timeDeviation = abs(timeInvest - 4),
+         emotDeviation = abs(emotClose - 4))
+#for women
+femaleInvestData <- femaleInvestData %>% 
   mutate(finDeviation = abs(finInvest - 4),
          timeDeviation = abs(timeInvest - 4),
          emotDeviation = abs(emotClose - 4))
@@ -267,19 +282,66 @@ table(investData$emotDeviation)
 table(investData[investData$sameOrDiff == 1]$emotDeviation)
 table(investData[investData$sameOrDiff == 0]$emotDeviation) #more deviation if clusters are different
 
-#anova comparing deviation for same vs diff clusters
+#for men and women separately
+
+#men 
+summary(maleInvestData$finDeviation)
+table(maleInvestData$finDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 1]$finDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
+
+summary(maleInvestData$timeDeviation)
+table(maleInvestData$timeDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 1]$timeDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
+
+summary(maleInvestData$emotDeviation)
+table(maleInvestData$emotDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 1]$emotDeviation)
+table(maleInvestData[maleInvestData$sameOrDiff == 0]$emotDeviation) 
+
+#women
+summary(femaleInvestData$finDeviation)
+table(femaleInvestData$finDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$finDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
+
+summary(femaleInvestData$timeDeviation)
+table(femaleInvestData$timeDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$timeDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
+
+summary(femaleInvestData$emotDeviation)
+table(femaleInvestData$emotDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$emotDeviation)
+table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$emotDeviation) 
+
+
+
+##anova comparing deviation for same vs diff clusters
 finInvestAnova <- aov(finDeviation ~ sameOrDiff, data = investData)
 
 timeInvestAnova <- aov(timeDeviation ~ sameOrDiff, data = investData)
 
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff, data = investData)
 
+##anova separated by men vs women
+
+finInvestAnovaM <- aov(finDeviation ~ sameOrDiff, data = maleInvestData)
+finInvestAnovaF <- aov(finDeviation ~ sameOrDiff, data = femaleInvestData)
+
+timeInvestAnovaM <- aov(timeDeviation ~ sameOrDiff, data = maleInvestData)
+timeInvestAnovaF <- aov(timeDeviation ~ sameOrDiff, data = femaleInvestData)
+
+emotCloseAnovaM <- aov(emotDeviation ~ sameOrDiff, data = maleInvestData)
+emotCloseAnovaF <- aov(emotDeviation ~ sameOrDiff, data = femaleInvestData)
 
 ##Q2: does this investment vary by cluster and also cluster of other partner?
 data$blueClust <- as.factor(data$blueClust)
 data$orangeClust <- as.factor(data$orangeClust)
 
-#fin invest variance based on cluster type
+##fin invest variance based on cluster type
+
 finInvestClust <- aov(fin_invest ~ blueClust*orangeClust, data = data) #no sig int
 finInvestClust2 <- aov(fin_invest ~ blueClust+orangeClust, data = data) #to do: subset by m vs f
 
@@ -296,6 +358,44 @@ tukeyTimeInvestClust <- TukeyHSD(timeInvestClust2)
 emotCloseClust <- aov(emot_close ~ blueClust*orangeClust, data = data) #sig interaction
 
 tukeyEmotCloseClust <- TukeyHSD(emotCloseClust)
+
+
+##do again, except by gender
+maleData <- subset(data, gender == 1)
+femaleData <- subset(data, gender ==0)
+
+#fin invest
+finInvestClustM <- aov(fin_invest ~ blueClust*orangeClust, data = maleData) #no sig int
+finInvestClust2M <- aov(fin_invest ~ blueClust+orangeClust, data = maleData) #sig
+
+tukeyFinInvestClustM <- TukeyHSD(finInvestClust2M)
+
+finInvestClustF <- aov(fin_invest ~ blueClust*orangeClust, data = femaleData) #no sig int
+finInvestClust2F <- aov(fin_invest ~ blueClust+orangeClust, data = femaleData) #sig
+
+tukeyFinInvestClustF <- TukeyHSD(finInvestClust2F) 
+#makes sense that both men and women would financially invest in cluster 1 
+#bc for men: hot young woman, for women: poorest man
+
+
+#time invest variance based on cluster type
+timeInvestClustM <- aov(time_invest ~ blueClust*orangeClust, data = maleData) #no sig int
+timeInvestClust2M <- aov(time_invest ~ blueClust+orangeClust, data = maleData) #no sig effects 
+
+timeInvestClustF <- aov(time_invest ~ blueClust*orangeClust, data = femaleData) #no sig int
+timeInvestClust2F <- aov(time_invest ~ blueClust+orangeClust, data = femaleData) #only sig w/ orange?
+
+tukeyTimeInvestClustF <- TukeyHSD(timeInvestClust2F) 
+  #spend more time with clust orange if clust orange is well rounded vs any other
+
+
+#emotional closeness variance based on cluster type
+emotCloseClustM <- aov(emot_close ~ blueClust*orangeClust, data = maleData) #sig interaction
+
+tukeyEmotCloseClustM <- TukeyHSD(emotCloseClustM)
+
+emotCloseClustF <- aov(emot_close ~ blueClust*orangeClust, data = femaleData) #not sig
+emotCloseClust2F <- aov(emot_close ~ blueClust+orangeClust, data = femaleData) #not sig
 
 
 
