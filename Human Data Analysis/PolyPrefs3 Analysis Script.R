@@ -244,23 +244,9 @@ investData<-melt(as.data.table(data),id.vars=c("PIN", "gender", "fin_invest","ti
 #renaming columns
 colnames(investData) <- c("PIN", "gender", "finInvest", "timeInvest", "emotClose", "sameOrDiff", "partner", "cluster")
 
-#create male v female datasets
-maleInvestData <- subset(investData, gender == 1)
-femaleInvestData <- subset(investData, gender ==0)
 
 ##calculating deviation from equal invest
 investData <- investData %>% 
-  mutate(finDeviation = abs(finInvest - 4),
-         timeDeviation = abs(timeInvest - 4),
-         emotDeviation = abs(emotClose - 4))
-
-#for men
-maleInvestData <- maleInvestData %>% 
-  mutate(finDeviation = abs(finInvest - 4),
-         timeDeviation = abs(timeInvest - 4),
-         emotDeviation = abs(emotClose - 4))
-#for women
-femaleInvestData <- femaleInvestData %>% 
   mutate(finDeviation = abs(finInvest - 4),
          timeDeviation = abs(timeInvest - 4),
          emotDeviation = abs(emotClose - 4))
@@ -282,59 +268,24 @@ table(investData$emotDeviation)
 table(investData[investData$sameOrDiff == 1]$emotDeviation)
 table(investData[investData$sameOrDiff == 0]$emotDeviation) #more deviation if clusters are different
 
-#for men and women separately
-
-#men 
-summary(maleInvestData$finDeviation)
-table(maleInvestData$finDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 1]$finDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
-
-summary(maleInvestData$timeDeviation)
-table(maleInvestData$timeDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 1]$timeDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
-
-summary(maleInvestData$emotDeviation)
-table(maleInvestData$emotDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 1]$emotDeviation)
-table(maleInvestData[maleInvestData$sameOrDiff == 0]$emotDeviation) 
-
-#women
-summary(femaleInvestData$finDeviation)
-table(femaleInvestData$finDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$finDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
-
-summary(femaleInvestData$timeDeviation)
-table(femaleInvestData$timeDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$timeDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
-
-summary(femaleInvestData$emotDeviation)
-table(femaleInvestData$emotDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 1]$emotDeviation)
-table(femaleInvestData[femaleInvestData$sameOrDiff == 0]$emotDeviation) 
-
-
 
 ##anova comparing deviation for same vs diff clusters
-finInvestAnova <- aov(finDeviation ~ sameOrDiff, data = investData)
 
-timeInvestAnova <- aov(timeDeviation ~ sameOrDiff, data = investData)
+finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
+finInvestAnovaInt <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
 
-emotCloseAnova <- aov(emotDeviation ~ sameOrDiff, data = investData)
+finHSD <- TukeyHSD(finInvestAnovaInt)
 
-##anova separated by men vs women
+timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
+timeInvestAnovaInt <- aov(timeDeviation ~ sameOrDiff*gender, data = investData)
 
-finInvestAnovaM <- aov(finDeviation ~ sameOrDiff, data = maleInvestData)
-finInvestAnovaF <- aov(finDeviation ~ sameOrDiff, data = femaleInvestData)
+timeHSD <- TukeyHSD(timeInvestAnovaInt)
 
-timeInvestAnovaM <- aov(timeDeviation ~ sameOrDiff, data = maleInvestData)
-timeInvestAnovaF <- aov(timeDeviation ~ sameOrDiff, data = femaleInvestData)
+emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
+emotCloseAnovaInt <- aov(emotDeviation ~ sameOrDiff*gender, data = investData)
 
-emotCloseAnovaM <- aov(emotDeviation ~ sameOrDiff, data = maleInvestData)
-emotCloseAnovaF <- aov(emotDeviation ~ sameOrDiff, data = femaleInvestData)
+
+
 
 ##Q2: does this investment vary by cluster and also cluster of other partner?
 data$blueClust <- as.factor(data$blueClust)
@@ -342,60 +293,28 @@ data$orangeClust <- as.factor(data$orangeClust)
 
 ##fin invest variance based on cluster type
 
-finInvestClust <- aov(fin_invest ~ blueClust*orangeClust, data = data) #no sig int
-finInvestClust2 <- aov(fin_invest ~ blueClust+orangeClust, data = data) #to do: subset by m vs f
+finInvestClustInt <- aov(fin_invest ~ blueClust*orangeClust, data = data) #no sig int
+finInvestClustMain <- aov(fin_invest ~ blueClust+orangeClust, data = data)
 
-tukeyFinInvestClust <- TukeyHSD(finInvestClust2)
-
-
-#time invest variance based on cluster type
-timeInvestClust <- aov(time_invest ~ blueClust*orangeClust, data = data) #no sig int
-timeInvestClust2 <- aov(time_invest ~ blueClust+orangeClust, data = data) #to do: subset by m vs f
-
-tukeyTimeInvestClust <- TukeyHSD(timeInvestClust2)
-
-#emotional closeness variance based on cluster type
-emotCloseClust <- aov(emot_close ~ blueClust*orangeClust, data = data) #sig interaction
-
-tukeyEmotCloseClust <- TukeyHSD(emotCloseClust)
-
-
-##do again, except by gender
-maleData <- subset(data, gender == 1)
-femaleData <- subset(data, gender ==0)
-
-#fin invest
-finInvestClustM <- aov(fin_invest ~ blueClust*orangeClust, data = maleData) #no sig int
-finInvestClust2M <- aov(fin_invest ~ blueClust+orangeClust, data = maleData) #sig
-
-tukeyFinInvestClustM <- TukeyHSD(finInvestClust2M)
-
-finInvestClustF <- aov(fin_invest ~ blueClust*orangeClust, data = femaleData) #no sig int
-finInvestClust2F <- aov(fin_invest ~ blueClust+orangeClust, data = femaleData) #sig
-
-tukeyFinInvestClustF <- TukeyHSD(finInvestClust2F) 
-#makes sense that both men and women would financially invest in cluster 1 
-#bc for men: hot young woman, for women: poorest man
+tukeyFinInvestClust <- TukeyHSD(finInvestClustMain)
 
 
 #time invest variance based on cluster type
-timeInvestClustM <- aov(time_invest ~ blueClust*orangeClust, data = maleData) #no sig int
-timeInvestClust2M <- aov(time_invest ~ blueClust+orangeClust, data = maleData) #no sig effects 
+timeInvestClustInt <- aov(time_invest ~ blueClust*orangeClust, data = data) #no sig int
+timeInvestClustMain <- aov(time_invest ~ blueClust+orangeClust, data = data) 
 
-timeInvestClustF <- aov(time_invest ~ blueClust*orangeClust, data = femaleData) #no sig int
-timeInvestClust2F <- aov(time_invest ~ blueClust+orangeClust, data = femaleData) #only sig w/ orange?
-
-tukeyTimeInvestClustF <- TukeyHSD(timeInvestClust2F) 
-  #spend more time with clust orange if clust orange is well rounded vs any other
-
+tukeyTimeInvestClust <- TukeyHSD(timeInvestClustMain)
 
 #emotional closeness variance based on cluster type
-emotCloseClustM <- aov(emot_close ~ blueClust*orangeClust, data = maleData) #sig interaction
+emotCloseClustInt <- aov(emot_close ~ blueClust*orangeClust, data = data) #sig interaction
 
-tukeyEmotCloseClustM <- TukeyHSD(emotCloseClustM)
+tukeyEmotCloseClust <- TukeyHSD(emotCloseClustInt)
 
-emotCloseClustF <- aov(emot_close ~ blueClust*orangeClust, data = femaleData) #not sig
-emotCloseClust2F <- aov(emot_close ~ blueClust+orangeClust, data = femaleData) #not sig
+
+
+
+
+
 
 
 
@@ -449,28 +368,6 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
 #combine clusters into one graph
 panelPlot<-ggarrange(plot1, plot2, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
-
-
-###Investment Questions
-
-##does financial investment in partners differ based on blue cluster
-
-#make cluster a factor
-data$blueClust <- as.factor(data$blueClust)
-data$orangeClust <- as.factor(data$orangeClust)
-
-#anova comparing means of fin_invest for each cluster. 
-#if a mean is lower, it means more investment in partner blue 
-#7 point scale: 1 = all in partner blue, 7 = all in partner orange
-
-finInvestBlue <- aov(fin_invest ~ blueClust, data = data) #sig
-tukeyFinInvestBlue <- TukeyHSD(finInvestBlue) 
-
-finInvestOrange <- aov(fin_invest ~ orangeClust, data = data) #sig
-tukeyFinInvestOrange <- TukeyHSD(finInvestOrange)
-
-
-#in conclusion, i have no idea how to interpret this... :(
 
 
 
