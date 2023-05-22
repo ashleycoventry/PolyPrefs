@@ -270,6 +270,8 @@ table(investData[investData$sameOrDiff == 0]$emotDeviation) #more deviation if c
 
 
 ##anova comparing deviation for same vs diff clusters
+investData$sameOrDiff <- as.factor(investData$sameOrDiff)
+investData$gender <- as.factor(investData$gender)
 
 finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
 finInvestAnovaInt <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
