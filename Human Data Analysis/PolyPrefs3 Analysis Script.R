@@ -134,6 +134,28 @@ chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) #yes
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
+###confusion matrices
+#(rearrange factor levels for well rounded in middle, relabel)
+
+#create matrix dataframe
+overallMatrix <- data.frame(((table(data$blueClust, data$orangeClust))/sum(table(data$blueClust, data$orangeClust)))*100)
+#relabel column names
+colnames(overallMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+overallMatrix[,3] <-round(overallMatrix[,3],2) #the "-1" excludes column 1
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+matrixOrder <- c(1, 3, 2)
+overallMatrix$blueCluster <- factor(overallMatrix$blueCluster, levels = matrixOrder)
+overallMatrix$orangeCluster <- factor(overallMatrix$orangeCluster, levels = matrixOrder)
+
+#plot matrix
+overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = overallMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "darkgreen")
+  #issue: now same cells aren't combined :/
+
 
 ### Permuation Analysis ###
 
