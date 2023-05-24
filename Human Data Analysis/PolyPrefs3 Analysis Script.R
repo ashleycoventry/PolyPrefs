@@ -212,10 +212,8 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
 
 #women
 
-#men
-
 #create matrix dataframe
-femaleMatrix <- data.frame(((table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1]))/sum(table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1])))*100)
+femaleMatrix <- data.frame(((table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0]))/sum(table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0])))*100)
 #relabel column names
 colnames(femaleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
 #round all numbers to 2 decimal places

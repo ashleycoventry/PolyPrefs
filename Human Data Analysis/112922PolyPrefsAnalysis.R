@@ -138,6 +138,125 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 
+
+
+
+####confusion matrices
+#(rearrange factor levels for well rounded in middle, relabel)
+
+##overall clust combo frequency
+#create matrix dataframe
+overallMatrix <- data.frame(((table(data$blueClust, data$orangeClust))/sum(table(data$blueClust, data$orangeClust)))*100)
+#relabel column names
+colnames(overallMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+overallMatrix[,3] <-round(overallMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 2, 3, 1)
+matrixOrder <- c(2,3,1)
+overallMatrix$blueCluster <- factor(overallMatrix$blueCluster, levels = matrixOrder)
+overallMatrix$orangeCluster <- factor(overallMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+overallMatrix[4,3] <- overallMatrix[2,3]+ overallMatrix[4,3]
+overallMatrix[2,3] <- NA
+
+overallMatrix[7,3] <- overallMatrix[3,3] + overallMatrix[7,3]
+overallMatrix[3,3] <- NA
+
+overallMatrix[6,3] <- overallMatrix[8,3] + overallMatrix[6,3]
+overallMatrix[8,3] <- NA
+
+#plot matrix
+overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = overallMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "darkgreen", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13))
+
+#ggsave("overallMatrix.jpeg", plot=last_plot(), width=225, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+
+
+
+##clust combo freq by gender
+
+#men
+
+#create matrix dataframe
+maleMatrix <- data.frame(((table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1]))/sum(table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1])))*100)
+#relabel column names
+colnames(maleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+maleMatrix[,3] <-round(maleMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+maleMatrix$blueCluster <- factor(maleMatrix$blueCluster, levels = matrixOrder)
+maleMatrix$orangeCluster <- factor(maleMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+maleMatrix[4,3] <- maleMatrix[2,3]+ maleMatrix[4,3]
+maleMatrix[2,3] <- NA
+
+maleMatrix[7,3] <- maleMatrix[3,3] + maleMatrix[7,3]
+maleMatrix[3,3] <- NA
+
+maleMatrix[6,3] <- maleMatrix[8,3] + maleMatrix[6,3]
+maleMatrix[8,3] <- NA
+
+#plot matrix
+maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = maleMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "darkgreen", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13))
+
+
+#women
+
+
+#create matrix dataframe
+femaleMatrix <- data.frame(((table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0]))/sum(table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0])))*100)
+#relabel column names
+colnames(femaleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+femaleMatrix[,3] <-round(femaleMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+femaleMatrix$blueCluster <- factor(femaleMatrix$blueCluster, levels = matrixOrder)
+femaleMatrix$orangeCluster <- factor(femaleMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+femaleMatrix[4,3] <- femaleMatrix[2,3]+ femaleMatrix[4,3]
+femaleMatrix[2,3] <- NA
+
+femaleMatrix[7,3] <- femaleMatrix[3,3] + femaleMatrix[7,3]
+femaleMatrix[3,3] <- NA
+
+femaleMatrix[6,3] <- femaleMatrix[8,3] + femaleMatrix[6,3]
+femaleMatrix[8,3] <- NA
+
+#plot matrix
+femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = femaleMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "darkgreen", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13))
+
+
+
+
+
+
+
 ### Permuation Analysis ###
 
 
