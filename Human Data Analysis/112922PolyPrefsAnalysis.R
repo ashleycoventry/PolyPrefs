@@ -26,7 +26,7 @@ nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
 data<- data[!nacheck,]
 
 
-#excluding people who don't identify as either men or women
+#excluding people who don't identify as either men or women --> should move to processing script
 
 data<-data[data$gender<3,]
 data <- data[data$orange_gender <3,]
@@ -358,7 +358,7 @@ logRegModelSex <- glmer(gender ~kFitab + (1|PIN), data= longData, family = "bino
 ### Plotting ###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
-#clusters aren't mapping on in the right order! double check centers with graph after running
+
 meanTrait <- c(clustCenters[1,], clustCenters[2,], clustCenters[3,])
 mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
 trait <- c(rep(c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources"), 3))  
