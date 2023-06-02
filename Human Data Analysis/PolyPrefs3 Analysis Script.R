@@ -164,7 +164,7 @@ overallMatrix[6,3] <- NA
 overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
   geom_tile(color = "white") +
   geom_text(label = overallMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "yellow", na.value = "whitesmoke") +
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
   scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
@@ -203,7 +203,7 @@ maleMatrix[6,3] <- NA
 maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
   geom_tile(color = "white") +
   geom_text(label = maleMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "darkgreen", na.value = "whitesmoke") +
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
   scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
@@ -237,7 +237,7 @@ femaleMatrix[6,3] <- NA
 femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
   geom_tile(color = "white") +
   geom_text(label = femaleMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "darkgreen", na.value = "whitesmoke") +
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
   scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
