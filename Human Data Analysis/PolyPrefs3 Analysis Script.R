@@ -9,7 +9,7 @@ library(ggplot2) #For generating other plots
 library(ggpubr)
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
-library(lme4) #for the logistic regression
+
 
 ###set seed###
 set.seed(040623)
@@ -129,6 +129,8 @@ fisherGender <- fisher.test(table(data$gender, data$kFitab), simulate.p.value = 
 
 ##do preferences for partner orange predict preferences for partner blue?
 chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) #yes
+chisqClustW <- cohenW( x = chisqClust$observed, p = chisqClust$expected) #effect size
+
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
@@ -314,7 +316,11 @@ for(i in 1:NROW(data)){
 
 
 chisqClust1 <- chisq.test(table(data$gender, data$clust1)) #sig
+chisqClust1W <- cohenW( x = chisqClust1$observed, p = chisqClust1$expected) #effect size
+
 chisqClust2 <- chisq.test(table(data$gender, data$clust2)) #sig
+chisqClust2W <- cohenW( x = chisqClust2$observed, p = chisqClust2$expected) #effect size
+
 chisqClust3 <- chisq.test(table(data$gender, data$clust3)) #not sig
 
 ###Ideal gender analysis
@@ -323,22 +329,17 @@ chisqClust3 <- chisq.test(table(data$gender, data$clust3)) #not sig
 #partner blue
 
 chisqIdealGenderBlue <- chisq.test(table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])) 
+chisqIdealGenderBlueW <- cohenW( x = chisqIdealGenderBlue$observed, p = chisqIdealGenderBlue$expected) #effect size
+
 idealGenderClustBlue <- table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])
 
 #partner orange
 chisqIdealGenderOrange <- chisq.test(table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])) 
+chisqIdealGenderOrangeW <- cohenW( x = chisqIdealGenderOrange$observed, p = chisqIdealGenderOrange$expected) #effect size
+
+
 idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])
 
-
-
-
-##logistic regression
-#predicting partner sex from cluster?
-
-
-logRegModelPsex <- glmer(idealGender ~ kFitab + (1|PIN), data = longData, family = "binomial") 
-
-logRegModelSex <- glmer(gender ~kFitab + (1|PIN), data= longData, family = "binomial")
 
 
 ###Investment Questions Analysis###
