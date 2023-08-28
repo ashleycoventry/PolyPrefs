@@ -9,7 +9,8 @@ library(ggplot2) #For generating other plots
 library(ggpubr)
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
-
+library(rcompanion) #for cohenW test
+library(pwr) # for pwr.chisq.test function
 
 ###set seed###
 set.seed(040623)
@@ -336,7 +337,7 @@ idealGenderClustBlue <- table(longData$idealGender[longData$partner == "idealBlu
 #partner orange
 chisqIdealGenderOrange <- chisq.test(table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])) 
 chisqIdealGenderOrangeW <- cohenW( x = chisqIdealGenderOrange$observed, p = chisqIdealGenderOrange$expected) #effect size
-
+chisqIdealGenderOrangePWR <- pwr.chisq.test(w = 0.1782, N =223, df = 2, sig.level = .05, power = )
 
 idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])
 
