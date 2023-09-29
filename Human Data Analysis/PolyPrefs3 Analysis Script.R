@@ -1,5 +1,5 @@
 #############Polyamorous Mate Preferences 3 -- Budget Allocation: Analysis Script #################
-####Ashley J Coventry, Tamsin German, Dan Conroy-Beam########
+####Ashley J Coventry, Tamsin German, Dan Conroy-Beam#######
 
 
 
