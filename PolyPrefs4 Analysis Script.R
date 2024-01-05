@@ -15,7 +15,7 @@ set.seed(010423)
 data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/PolyPrefs.nosync/Human Data/Processed Data/PolyPrefs4Processed Data20240103 152520.csv")
 
 
-###Ideal Partner Cluster Analysis
+####Ideal Partner Cluster Analysis
 
 ##Remove NAs from budget allo items##
 #necessary for cluster analysis because kfits is omitting NAs. 
@@ -324,5 +324,133 @@ tukeyEmotCloseClust <- TukeyHSD(emotCloseClustMain)
 
 
 
+
+
+
+
+####Actual Partner Cluster Analysis
+
+
+analysesActual <- data[!(data[,10] == 1),]
+columns <- c(1:2, 5, 10, 79, 96, 135, 143:156)
+analysesActual <- data[,columns]
+
+
+##reshape data wide --> long
+
+#Remove NAs from budget allo items#
+#necessary for cluster analysis because kfits is omitting NAs. 
+
+nacheck2 <- apply(analysesActual[,8:21], 1, function(x) sum(is.na(x))>0)
+analysesActual<- analysesActual[!nacheck2,] 
+
+
+#excluding actual partners who don't identify as either men or women
+analysesActual <- analysesActual[analysesActual$actual_a_gender <3,]
+analysesActual <- analysesActual[analysesActual$actual_b_gender <3,]
+
+
+###reshape data wide --> long and only keep columns relevant for kmeans
+
+#melt function to have two rows (1 for orange, 1 for blue) with each trait rating
+
+longDataActual<-melt(as.data.table(analysesActual),id.vars=c("PIN","gender","age", "sex", "num_partners"),
+               measure.vars=list(c(5,6), #gender (first listed = partner a, second = partner b)
+                                 c(8,15), #ambition
+                                 c(11,18), #attractiveness
+                                 c(9,16), #intelligence
+                                 c(13,20), #good in bed
+                                 c(10,17), #kindness
+                                 c(14,21), #status
+                                 c(12,19))) #wealth
+#Relabel columns
+colnames(longDataActual)[6:14]<-c("partner","partnerGender","amb","attract",
+                            "intel","sexy","kind",
+                            "stat","finPros")
+
+
+#Relabel partner type values (1 = blue, 2 = orange)
+longDataActual$partner<-as.factor(ifelse(longDataActual$partner==1,"idealA","idealB"))
+
+
+###ipsatizing
+#take means of traits for every PIN and subtract mean from indiv traits & place in new columns
+
+longDataActual <- longDataActual %>%
+  mutate(across(c("amb", "attract", "intel", "sexy", "kind", "stat", "finPros"),
+                ~ . - mean(., na.rm = TRUE), .names = "{col}Ip"))
+
+
+
+
+
+###K-Means Cluster Analysis###
+
+#extract kmeans wss
+kfitWssActual<-sapply(1:7,function(x) kmeans(longDataActual[,15:21],x)$tot.withinss)
+
+#scree plot
+screePlotActual<-qplot(1:7,kfitWssActual)
+
+##compute differences in within ss across k for k-means clustering
+wssDiffsActual<-diff(kfitWssActual)
+
+
+##Add this classification (4 clusters) to the original dataframe
+
+kFitActual<-kmeans(longDataActual[,15:21],3)
+
+longDataActual$kFitab <- kFitActual$cluster
+
+##Create vectors of preference means for each cluster (without age)
+clustCentersActual<-kFitActual$centers
+
+##Look at gender breakdown by cluster
+clustGenderActual<-table(longDataActual$gender,longDataActual$kFitab)
+
+##compute variance between trait ratings for each cluster
+#to see if maybe one cluster is more well rounded than others
+clustVarsActual<-apply(clustCentersActual,1,var)
+
+
+
+
+
+###Plotting clusters
+##multipanel figure
+#first create individual plot for each cluster
+
+#cluster 1 (title will change based on clusters)
+meanTrait1Act <- clustCentersActual[1,]
+trait1Act <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting1Act <- data.frame(meanTrait1Act, trait1Act)
+plot1Act <- ggplot(data=plotting1Act, aes(x=trait1Act, y=meanTrait1Act)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3") +
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(-2,2) +
+  theme(axis.text.x = element_text(angle = 90)) 
+
+#cluster 2 
+meanTrait2Act <- clustCentersActual[2,]
+trait2Act <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting2Act <- data.frame(meanTrait2Act, trait2Act)
+plot2Act <- ggplot(data=plotting2Act, aes(x=trait2Act, y=meanTrait2Act)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(-2,2) +
+  theme(axis.text.x = element_text(angle = 90))
+
+#cluster 3 
+meanTrait3Act <- clustCentersActual[3,]
+trait3Act <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plotting3Act <- data.frame(meanTrait3Act, trait3Act)
+plot3Act <- ggplot(data=plotting3Act, aes(x=trait3Act, y=meanTrait3Act)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4")+ 
+  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(-2,2) +
+  theme(axis.text.x = element_text(angle = 90)) 
+
+
+
+
+#combine clusters into one graph
+panelPlotAct<-ggarrange(plot1Act, plot2Act, plot3Act, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
 
