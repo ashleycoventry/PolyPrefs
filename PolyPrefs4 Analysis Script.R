@@ -177,7 +177,6 @@ fisherGender <- fisher.test(table(data$gender, data$kFitab), simulate.p.value = 
 
 ##do preferences for partner orange predict preferences for partner blue?
 fisherClust<-fisher.test(table(data$blueClust, data$orangeClust), simulate.p.value = TRUE) #yes
-chisqClustW <- cohenW(x = chisqClust$observed, p = chisqClust$expected) #effect size
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
@@ -396,7 +395,7 @@ screePlotActual<-qplot(1:7,kfitWssActual)
 wssDiffsActual<-diff(kfitWssActual)
 
 
-##Add this classification (4 clusters) to the original dataframe
+##Add this classification to the original dataframe
 
 kFitActual<-kmeans(longDataActual[,15:21],3)
 
