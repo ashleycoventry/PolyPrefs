@@ -138,7 +138,6 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 ###confusion matrices
-#(rearrange factor levels for well rounded in middle, relabel)
 
 ##overall clust combo frequency
 #create matrix dataframe
