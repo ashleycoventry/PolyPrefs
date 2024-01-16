@@ -121,7 +121,7 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
   geom_hline(yintercept = mean(meanTrait3), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,9) +
   theme(axis.text.x = element_text(angle = 90)) +
-  ggtitle("Good in Bed,\n Wealthy & Hot")
+  ggtitle("Good in Bed,\n Kind & Hot")
 
 
 #combine clusters into one graph
@@ -366,10 +366,6 @@ for(i in 1:NROW(data)){
   
 }
 
-for(i in 1:NROW(data)){
-  ifelse(data$orangeClust[i] == 4 | data$blueClust[i] == 4, data$clust4[i]<-1, data$clust4[i]<-0)
-  
-}
 
 chisqClust1 <- chisq.test(table(data$gender, data$clust1)) #not sig
 
@@ -377,7 +373,6 @@ chisqClust2 <- chisq.test(table(data$gender, data$clust2)) #not sig
 
 chisqClust3 <- chisq.test(table(data$gender, data$clust3)) #not sig
 
-chisqClust4 <- chisq.test(table(data$gender, data$clust4))  #not sig
 
 
 ###Ideal gender analysis
@@ -468,6 +463,38 @@ tukeyEmotCloseClust <- TukeyHSD(emotCloseClustMain)
 
 
 
+
+###compare whether higher similarity in study 4 is a meaningful difference compared to study 3
+
+#load study 3 dataframe
+pp3Data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/PolyPrefs.nosync/PP3AnalyzedData.csv")
+pp3Data$study <- "monogSamp" #create sample column
+
+#get only needed columns
+pp3Sample <- pp3Data[,c("sameOrDiff", "study")]
+
+#load study 2 dataframe
+pp2Data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/PolyPrefs.nosync/PP2AnalyzedData.csv")
+pp2Data$study <- "monogSamp" #create sample column (same as for study 3 bc pooling the samples)
+
+#get only needed columns
+pp2Sample <- pp2Data[,c("sameOrDiff", "study")]
+
+
+#add sample column to pp4 data
+data$study <- "polySamp"
+
+#get only needed columns
+pp4Sample <- data[,c("sameOrDiff", "study")]
+
+
+#comparing samples of study 3 to study 4:
+#combine two dfs into one
+compareData <- rbind(pp2Sample, pp3Sample, pp4Sample)
+
+#chisq
+compareChisq <- chisq.test(table(compareData$study, compareData$sameOrDiff)) #1 = same, 2 = different
+comparechisqW <- cohenW( x = compareChisq$observed, p = compareChisq$expected) #effect size
 
 
 
