@@ -206,10 +206,11 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
   geom_tile(color = "white") +
   geom_text(label = maleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
-  scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
+  scale_x_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
+  scale_y_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(B) Male Participants")
 
 
 #women
@@ -240,10 +241,17 @@ femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, 
   geom_tile(color = "white") +
   geom_text(label = femaleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
-  scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
+  scale_x_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
+  scale_y_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(A) Female Participants")
+
+
+#panel plot of both of these graphs
+MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow=1, ncol=2, 
+                             common.legend = TRUE, legend = "right")
+#ggsave("PP3MatrixPlotPanel.jpeg", plot=last_plot(), width=275, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
