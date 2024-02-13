@@ -172,8 +172,8 @@ overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster
   geom_tile(color = "white") +
   geom_text(label = overallMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
-  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_x_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
   theme(text = element_text(size = 13))
 
@@ -211,10 +211,11 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
   geom_tile(color = "white") +
   geom_text(label = maleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
-  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_x_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(B) Male Participants")
 
 
 #women
@@ -246,10 +247,16 @@ femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, 
   geom_tile(color = "white") +
   geom_text(label = femaleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
-  scale_y_discrete(labels = c('Attractive & Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_x_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
+  scale_y_discrete(labels = c('Attractive &\n Good in Bed','Well-Rounded','Kind & Smart')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(A) Female Participants")
+
+#panel plot of both of these graphs
+MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow=1, ncol=2, 
+                           common.legend = TRUE, legend = "right")
+#ggsave("PP2MatrixPlotPanel.jpeg", plot=last_plot(), width=275, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
@@ -380,7 +387,9 @@ plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+
   geom_hline(yintercept = mean(meanTrait1), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90)) +
+  ggtitle("(A) Kind and Smart")
+
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
@@ -390,7 +399,8 @@ plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3")+ 
   geom_hline(yintercept = mean(meanTrait2), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
-  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90)) +
+  ggtitle("(B) Attractive and\nGood in Bed")
 
 #cluster 3 
 meanTrait3 <- clustCenters[3,]
@@ -400,7 +410,8 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4")+ 
   geom_hline(yintercept = mean(meanTrait3), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
-  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90)) +
+  ggtitle("(C) Well-Rounded")
 
 #combine clusters into one graph
 panelPlot<-ggarrange(plot1, plot2, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
