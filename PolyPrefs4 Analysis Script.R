@@ -125,7 +125,7 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
 
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot2, plot3, plot1,  nrow=1, ncol=4,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot2, plot3, plot1,  nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
 #ggsave("PP4panelPlot.jpeg", plot=last_plot(), width=250, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
