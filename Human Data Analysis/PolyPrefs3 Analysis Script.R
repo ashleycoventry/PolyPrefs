@@ -465,7 +465,7 @@ plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_hline(yintercept = mean(meanTrait1), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90)) +
-  ggtitle("(B) Attractive and \nGood in Bed")
+  ggtitle("(B) Good in Bed\n and Attractive")
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
