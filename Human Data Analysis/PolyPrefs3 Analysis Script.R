@@ -1,16 +1,16 @@
 #############Polyamorous Mate Preferences 3 -- Budget Allocation: Analysis Script #################
-####Ashley J Coventry, Tamsin German, Dan Conroy-Beam#######
+####Ashley J Coventry, Tamsin German, Dan Conroy-Beam########
 
 
 
 ###load packages 
 library(psych) #for scree plot
 library(ggplot2) #For generating other plots
-library(ggpubr)
 library(data.table) #for reshaping data
 library(stringr) #for permutation analy data reorganizing
 library(rcompanion) #for cohenW test
 library(pwr) # for pwr.chisq.test function
+library(lme4)
 
 ###set seed###
 set.seed(040623)
@@ -138,6 +138,7 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 
 
 ###confusion matrices
+#(rearrange factor levels for well rounded in middle, relabel)
 
 ##overall clust combo frequency
 #create matrix dataframe
@@ -209,7 +210,7 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
   scale_x_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
   scale_y_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))+
+  theme(text = element_text(size = 13)) +
   ggtitle("(B) Male Participants")
 
 
@@ -247,13 +248,11 @@ femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, 
   theme(text = element_text(size = 13))+
   ggtitle("(A) Female Participants")
 
-
-#panel plot of both of these graphs
-MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow=1, ncol=2, 
+#panel plot of both graphs
+MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 2, 
                              common.legend = TRUE, legend = "right")
-#ggsave("PP3MatrixPlotPanel.jpeg", plot=last_plot(), width=275, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
-
+#ggsave("PP3MatrixPlotPanel.jpeg", plot = last_plot(), width = 275, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
 ### Permuation Analysis ###
 
@@ -371,75 +370,93 @@ investData <- investData %>%
          emotDeviation = abs(emotClose - 4))
 
 
-#look at deviation descriptively
-summary(investData$finDeviation)
-table(investData$finDeviation)
-table(investData[investData$sameOrDiff == 1]$finDeviation)
-table(investData[investData$sameOrDiff == 0]$finDeviation) #more deviation if clusters are different
-
-summary(investData$timeDeviation)
-table(investData$timeDeviation)
-table(investData[investData$sameOrDiff == 1]$timeDeviation)
-table(investData[investData$sameOrDiff == 0]$timeDeviation) #more deviation if clusters are different
-
-summary(investData$emotDeviation)
-table(investData$emotDeviation)
-table(investData[investData$sameOrDiff == 1]$emotDeviation)
-table(investData[investData$sameOrDiff == 0]$emotDeviation) #more deviation if clusters are different
-
 
 ##anova comparing deviation for same vs diff clusters
 investData$sameOrDiff <- as.factor(investData$sameOrDiff)
 investData$gender <- as.factor(investData$gender)
 
-finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
-finInvestAnovaInt <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
+#get rid of missing deviation data
+nacheckInvest <- apply(investData[,9:11], 1, function(x) sum(is.na(x))>0)
+investData<- investData[!nacheckInvest,]
 
-finHSD <- TukeyHSD(finInvestAnovaInt)
+
+#financial investment
+finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
+finInvestMeans <- tapply(investData$finDeviation, investData$sameOrDiff, mean)
+
+
 
 timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
-timeInvestAnovaInt <- aov(timeDeviation ~ sameOrDiff*gender, data = investData)
+timeInvestMeans <- tapply(investData$timeDeviation, investData$sameOrDiff, mean)
 
-timeHSD <- TukeyHSD(timeInvestAnovaInt)
 
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
-emotCloseAnovaInt <- aov(emotDeviation ~ sameOrDiff*gender, data = investData)
+emotCloseMeans <- tapply(investData$emotDeviation, investData$sameOrDiff, mean)
 
 
 
 
-##Q2: does this investment vary by cluster and also cluster of other partner?
-data$blueClust <- as.factor(data$blueClust)
-data$orangeClust <- as.factor(data$orangeClust)
+##Q2: does this investment vary by cluster?
+##wellRounded investment
+#is whether a partner is in the well-rounded cluster predicted by investment level
 
-##fin invest variance based on cluster type
+#create wellRounded variable (0 = wellRounded, 1 = not)
 
-finInvestClustInt <- aov(fin_invest ~ blueClust*orangeClust, data = data) #no sig int
-finInvestClustMain <- aov(fin_invest ~ blueClust+orangeClust, data = data)
+investData$wellRounded <- 
+  ifelse(investData$cluster == 3, 0, 1)
 
-tukeyFinInvestClust <- TukeyHSD(finInvestClustMain)
+#create recoded investment variable (so high number is just more investment in that partner, instead of in orange)
 
-
-#time invest variance based on cluster type
-timeInvestClustInt <- aov(time_invest ~ blueClust*orangeClust, data = data) #no sig int
-timeInvestClustMain <- aov(time_invest ~ blueClust+orangeClust, data = data) 
-
-tukeyTimeInvestClust <- TukeyHSD(timeInvestClustMain)
-
-#emotional closeness variance based on cluster type
-emotCloseClustInt <- aov(emot_close ~ blueClust*orangeClust, data = data) #sig interaction
-
-tukeyEmotCloseClust <- TukeyHSD(emotCloseClustInt)
+investData$finInvestRC <- investData$finInvest #duplicate finInvest variable
+investData$timeInvestRC <- investData$timeInvest #duplicate timeInvest variable
+investData$emotCloseRC <- investData$emotClose #duplicate emotClose variable
 
 
+investData$finInvestRC <- ifelse(investData$partner == 'blueClust', 
+                                 car::recode(investData$finInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                 investData$finInvestRC)
+
+investData$timeInvestRC <- ifelse(investData$partner == 'blueClust', 
+                                 car::recode(investData$timeInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                 investData$timeInvestRC)
+
+investData$emotCloseRC <- ifelse(investData$partner == 'blueClust', 
+                                  car::recode(investData$emotCloseRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                  investData$emotCloseRC)
+
+
+#create composite investment variable (averaging 3 together)
+
+investData$compInvest <- rowMeans(investData[,13:15])
+
+#glm predicting wellrounded from investment
+investData$partner <- as.factor(investData$partner)
+
+wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binomial(), data = investData)
 
 
 
+#use plotzing to graph 
+compInvestGraph <- graph_line("compInvest", "wellRounded", 
+                              setcolor = "blue",
+                              setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner)",
+                              setxaxislabel = "Partner Cluster",
+                              setxlevels = c("Well-Rounded", "Not\nWell-Rounded"),
+                              setyaxissize = 11,
+                              setxaxissize = 11,
+                              setytitlesize = 11,
+                              setxtitlesize = 11,
+                              data = investData)
 
 
 
+#ggsave("PP3InvestPlot.jpeg", plot=last_plot(), width=150, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+#save investment data frame to later compare investment results to those of poly study
+#write.csv(investData,paste0("/Users/ashle/Desktop/PolyPrefs3InvestData.csv"), row.names = FALSE)
 
-### Plotting ###
+
+
+### Plotting CLusters###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
 #clusters aren't mapping on in the right order! double check centers with graph after running
@@ -464,7 +481,7 @@ plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3") +
   geom_hline(yintercept = mean(meanTrait1), color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
-  theme(axis.text.x = element_text(angle = 90)) +
+  theme(axis.text.x = element_text(angle = 90))+
   ggtitle("(B) Good in Bed\n and Attractive")
 
 #cluster 2 
@@ -490,11 +507,9 @@ plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
   ggtitle("(C) Well-Rounded")
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot2, plot1, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot1, plot2, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
-#ggsave("PP3panelPlot.jpeg", plot=last_plot(), width=250, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
-
-
+#ggsave("PP3PanelPlot.jpeg", plot = last_plot(), width = 250, height = 159, units = "mm", path = "/Users/ashle/Desktop", scale = 1, dpi = 300, limitsize = TRUE)
 
 
 
