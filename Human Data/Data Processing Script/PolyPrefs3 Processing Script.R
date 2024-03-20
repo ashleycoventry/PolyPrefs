@@ -86,7 +86,7 @@ data <- subset(data, data$attn_check10 == "11" | data$attn_check10 == "")
   #keeping everyone who answered correctly or whose response is blank (didn't get question)
 data <- subset(data, data$attn_check10.1 == "10" | data$attn_check10.1 == "")
 
-#attn check brings 297 initial observation to 231 (eliminates 66 responses)
+#attn check brings 295 initial observation to 231 
 
 ###create pin
 

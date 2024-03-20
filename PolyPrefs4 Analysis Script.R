@@ -356,7 +356,6 @@ diffClust <- table(data$blueClust[data$sameOrDiff ==1])
 data$clust1 <- NA #for cluster 1
 data$clust2<- NA #for cluster 2
 data$clust3 <- NA #for cluster 3
-data$clust4 <- NA #cluster 4
 
 
 ##for loop to fill columns
@@ -422,25 +421,15 @@ investData <- investData %>%
          emotDeviation = abs(emotClose - 4))
 
 
-#look at deviation descriptively
-table(investData$finDeviation)
-table(investData[investData$sameOrDiff == 1]$finDeviation)
-table(investData[investData$sameOrDiff == 0]$finDeviation) 
-
-
-table(investData$timeDeviation)
-table(investData[investData$sameOrDiff == 1]$timeDeviation)
-table(investData[investData$sameOrDiff == 0]$timeDeviation)
-
-
-table(investData$emotDeviation)
-table(investData[investData$sameOrDiff == 1]$emotDeviation)
-table(investData[investData$sameOrDiff == 0]$emotDeviation) 
 
 
 ##anova comparing deviation for same vs diff clusters
 investData$sameOrDiff <- as.factor(investData$sameOrDiff)
 investData$gender <- as.factor(investData$gender)
+
+#get rid of missing deviation data
+nacheckInvest <- apply(investData[,9:11], 1, function(x) sum(is.na(x))>0)
+investData<- investData[!nacheckInvest,]
 
 finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
 timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
@@ -448,27 +437,96 @@ emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
 
 
 
-##Q2: does this investment vary by cluster and also cluster of other partner?
+##Q2: is investment related to whether a partner is well-rounded or not (not pre-registered)
 data$blueClust <- as.factor(data$blueClust)
 data$orangeClust <- as.factor(data$orangeClust)
 
-#fin invest variance based on cluster type
+##wellRounded investment
+#is whether a partner is in the well-rounded cluster predicted by investment level
 
-finInvestClustInt <- aov(fin_invest ~ blueClust*orangeClust, data = data)
-finInvestClustMain <- aov(fin_invest ~ blueClust+orangeClust, data = data)
+#create wellRounded variable (0 = wellRounded, 1 = not)
+
+investData$wellRounded <- 
+  ifelse(investData$cluster == 3, 0, 1)
+
+#create recoded investment variable (so high number is just more investment in that partner, instead of in orange)
+
+investData$finInvestRC <- investData$finInvest #duplicate finInvest variable
+investData$timeInvestRC <- investData$timeInvest #duplicate timeInvest variable
+investData$emotCloseRC <- investData$emotClose #duplicate emotClose variable
 
 
-#time invest variance based on cluster type
-timeInvestClustInt <- aov(time_invest ~ blueClust*orangeClust, data = data) 
-timeInvestClustMain <- aov(time_invest ~ blueClust+orangeClust, data = data) 
+investData$finInvestRC <- ifelse(investData$partner == 'blueClust', 
+                                 car::recode(investData$finInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                 investData$finInvestRC)
 
-tukeyTimeInvestClust <- TukeyHSD(timeInvestClustMain)
+investData$timeInvestRC <- ifelse(investData$partner == 'blueClust', 
+                                  car::recode(investData$timeInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                  investData$timeInvestRC)
 
-#emotional closeness variance based on cluster type
-emotCloseClustInt <- aov(emot_close ~ blueClust*orangeClust, data = data) 
-emotCloseClustMain <- aov(emot_close ~ blueClust+orangeClust, data = data) 
+investData$emotCloseRC <- ifelse(investData$partner == 'blueClust', 
+                                 car::recode(investData$emotCloseRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
+                                 investData$emotCloseRC)
 
-tukeyEmotCloseClust <- TukeyHSD(emotCloseClustMain)
+
+#create composite investment variable (averaging 3 together)
+
+investData$compInvest <- rowMeans(investData[,13:15])
+
+#glm predicting wellrounded from investment
+investData$partner <- as.factor(investData$partner)
+
+wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binomial(), data = investData)
+
+#use plotzing to graph
+#use plotzing to graph 
+compInvestGraph <- graph_line("compInvest", "wellRounded", 
+                              setcolor = "purple",
+                              setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner",
+                              setxaxislabel = "Partner Cluster",
+                              setxlevels = c("Well-Rounded", "Not\nWell-Rounded"),
+                              setyaxissize = 11,
+                              setxaxissize = 11,
+                              setytitlesize = 10,
+                              setxtitlesize = 10,
+                              data = investData)
+
+
+
+#ggsave("PP4InvestPlot.jpeg", plot=last_plot(), width=150, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+
+##graph of investment with both monog and poly people
+
+#import monog data
+pp3InvestData <- read.csv("/Users/ashle/Desktop/PolyPrefs3InvestData.csv")
+#create sample column
+pp3InvestData$study <- "monogSamp"
+#get only needed columns
+pp3InvestData <- pp3InvestData[,c("wellRounded", "compInvest", "study")]
+
+#same for pp4 data
+pp4InvestData <- investData[,c("wellRounded", "compInvest")]
+pp4InvestData$study <- "polySamp"
+
+#combine two dfs into one
+compareInvestData <- rbind(pp3InvestData, pp4InvestData)
+
+#graph using plotzing
+
+compInvestGraphMonogPoly <- graph_line("compInvest", "wellRounded", "study",
+                              setcolors = c("blue", "hotpink"),
+                              setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner",
+                              setxaxislabel = "Partner Cluster",
+                              setxlevels = c("Well-Rounded", "Not\nWell-Rounded"),
+                              setlegendlevels = c("Monogamous Sample", "Polyamorous Sample"),
+                              setlegendtitle = "Sample",
+                              setyaxissize = 10,
+                              setxaxissize = 10,
+                              setytitlesize = 10,
+                              setxtitlesize = 10,
+                              data = compareInvestData)
+#ggsave("CompInvestPlot.jpeg", plot=last_plot(), width=250, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+
 
 
 
