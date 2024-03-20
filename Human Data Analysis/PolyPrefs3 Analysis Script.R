@@ -479,10 +479,10 @@ trait1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindne
 plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3") +
-  geom_hline(yintercept = mean(meanTrait1), color="black", linetype = "dashed", linewidth = 1) +
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90))+
-  ggtitle("(B) Good in Bed\n and Attractive")
+  ggtitle("(B) Good in Bed and Attractive")
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
@@ -490,7 +490,7 @@ trait2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindne
 plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+ 
-  geom_hline(yintercept = mean(meanTrait2), color="black", linetype = "dashed", linewidth = 1) +
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90)) +
   ggtitle("(A) Wealthy and Kind")
@@ -501,13 +501,13 @@ trait3 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindne
 plotting3 <- data.frame(meanTrait3, trait3)
 plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4")+ 
-  geom_hline(yintercept = mean(meanTrait3), color="black", linetype = "dashed", linewidth = 1) +
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90)) +
   ggtitle("(C) Well-Rounded")
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot1, plot2, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot2, plot1, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
 #ggsave("PP3PanelPlot.jpeg", plot = last_plot(), width = 250, height = 159, units = "mm", path = "/Users/ashle/Desktop", scale = 1, dpi = 300, limitsize = TRUE)
 
