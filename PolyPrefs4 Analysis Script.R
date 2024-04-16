@@ -495,6 +495,72 @@ compInvestGraph <- graph_line("compInvest", "wellRounded",
 
 #ggsave("PP4InvestPlot.jpeg", plot=last_plot(), width=150, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
+
+
+
+
+
+###confusion matrix of deviation from equal invest given cluster combo
+
+#need dataframe with blue clust, orange clust, investment
+
+investData$compInvestRaw <- rowMeans(investData[,3:5]) #here higher scores mean more investment in partner orange
+
+investMatrixData <- data.frame(investData$PIN, investData$partner, investData$cluster, investData$compInvestRaw)
+
+investMatrixData <- reshape(investMatrixData, idvar = "investData.PIN", timevar = "investData.partner", direction = "wide")
+
+#remove duplicate column and PIN since invest score is same regardless of partner blue v orange: 
+investMatrixData <- investMatrixData[,c("investData.cluster.blueClust", "investData.cluster.orangeClust", "investData.compInvestRaw.orangeClust") ]
+
+colnames(investMatrixData) <- c("blueClust", "orangeClust", "compInvest")
+
+
+#create blank df for each combo of clusters
+investMatrix <- data.frame(
+  blueClust = rep(NA, 9), 
+  orangeClust = rep(NA, 9),
+  compInvest = rep(NA, 9))
+
+investMatrix$blueClust <- rep(1:3, 3)
+investMatrix$orangeClust <- c(1, 1, 1, 2, 2, 2, 3, 3, 3)
+
+#filling blank DF with relevant means
+investMatrix[1,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 1 & investMatrixData$orangeClust ==1])
+investMatrix[2,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 2 & investMatrixData$orangeClust ==1])
+investMatrix[3,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 3 & investMatrixData$orangeClust ==1])
+investMatrix[4,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 1 & investMatrixData$orangeClust ==2])
+investMatrix[5,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 2 & investMatrixData$orangeClust ==2])
+investMatrix[6,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 3 & investMatrixData$orangeClust ==2])
+investMatrix[7,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 1 & investMatrixData$orangeClust ==3])
+investMatrix[8,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 2 & investMatrixData$orangeClust ==3])
+investMatrix[9,3] <- mean(investMatrixData$compInvest[investMatrixData$blueClust == 3 & investMatrixData$orangeClust ==3])
+
+
+
+#round all numbers to 2 decimal places
+investMatrix[,3] <-round(investMatrix[,3],2) 
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 3, 1, 2) -- matrixOrder specified with other matrices
+
+investMatrix$blueClust <- factor(investMatrix$blueClust, levels = matrixOrder)
+investMatrix$orangeClust <- factor(investMatrix$orangeClust, levels = matrixOrder)
+
+
+#plot matrix
+investMatrixPlot <- ggplot(investMatrix, aes(x= blueClust, y = orangeClust, fill = ((abs(compInvest - 4))))) +
+  geom_tile(color = "white") +
+  geom_text(label = round(abs(investMatrix$compInvest - 4), 2))+
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Good in Bed, Kind, & Hot','Well-Rounded','Kind & Wealthy')) +
+  scale_y_discrete(labels = c('Good in Bed, Kind, & Hot','Well-Rounded','Kind & Wealthy')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Deviation from Equal Investment") +
+  theme(text = element_text(size = 13)) #warning but just bc we intentionally have empty cells
+
+
+
+
+
 ##graph of investment with both monog and poly people
 
 #import monog data
@@ -565,6 +631,8 @@ comparechisqW <- cohenW( x = compareChisq$observed, p = compareChisq$expected) #
 
 
 
+#do poly people invest more equally in partners compared to monog people? 
+equalInvestTest <- t.test(abs(compInvest - 4) ~ study, data = compareInvestData)
 
 ####Actual Partner Cluster Analysis
 
