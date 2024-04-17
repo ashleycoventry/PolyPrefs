@@ -474,12 +474,15 @@ investData$emotCloseRC <- ifelse(investData$partner == 'blueClust',
 investData$compInvest <- rowMeans(investData[,13:15])
 
 #glm predicting wellrounded from investment
+library(lme4)
+
 investData$partner <- as.factor(investData$partner)
 
 wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binomial(), data = investData)
 
 #use plotzing to graph
 #use plotzing to graph 
+library(plotzing)
 compInvestGraph <- graph_line("compInvest", "wellRounded", 
                               setcolor = "purple",
                               setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner",
