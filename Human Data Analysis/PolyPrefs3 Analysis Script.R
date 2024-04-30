@@ -11,6 +11,8 @@ library(stringr) #for permutation analy data reorganizing
 library(rcompanion) #for cohenW test
 library(pwr) # for pwr.chisq.test function
 library(lme4)
+library(ggpubr)
+library(plotzing)
 
 ###set seed###
 set.seed(040623)
@@ -38,7 +40,7 @@ data <- data[data$blue_gender <2,]
 
 #melt function to have two rows (1 for orange, 1 for blue) with each trait rating
 
-longData<-melt(as.data.table(data),id.vars=c("PIN","gender","age"),
+longData<-data.table::melt(as.data.table(data),id.vars=c("PIN","gender","age"),
                measure.vars=list(c(31,29), #gender (first listed = blue, second = orange)
                                  c(14,21), #ambition
                                  c(15,22), #attractiveness
@@ -356,7 +358,7 @@ idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealO
 ##make long dataframe with investment info
 #melt function to have two rows (1 for orange, 1 for blue) with each trait rating
 
-investData<-melt(as.data.table(data),id.vars=c("PIN", "gender", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
+investData<-data.table::melt(as.data.table(data),id.vars=c("PIN", "gender", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
                measure.vars=list(c(143,144))) #clust (first listed = blue, second = orange)
 
 #renaming columns
