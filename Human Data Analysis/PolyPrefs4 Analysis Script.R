@@ -299,7 +299,7 @@ for(a in 1:100000){
   bNull<-sample(data$orangeClust)
   
   #Compute sameordiff
-  sodNull<-ifelse(aNull==bNull, 0, 1)
+  sodNull<-ifelse(aNull==bNull, 1, 0)
   
   #Compute and saving average differentness
   nullDistAvg[a]<-mean(sodNull)
@@ -324,11 +324,11 @@ pValueDiff <- sum(nullDistAvg < avgDiff) /100000 #more diff than chance?
 ###How many ideal partners are in each cluster?
 
 ##for people who wanted both partners in same cluster
-sameClust <- table(data$blueClust[data$sameOrDiff == 0]) 
+sameClust <- table(data$blueClust[data$sameOrDiff == 1]) 
 
 ##for people who wanted partners in different clusters
 #don't need to run separately for clusters A and B bc made order arbitrary
-diffClust <- table(data$blueClust[data$sameOrDiff ==1])  
+diffClust <- table(data$blueClust[data$sameOrDiff ==0])  
 
 
 
@@ -337,11 +337,11 @@ diffClust <- table(data$blueClust[data$sameOrDiff ==1])
 ###How many ideal partners are in each cluster?
 
 ##for people who wanted both partners in same cluster
-sameClust <- table(data$blueClust[data$sameOrDiff == 0]) 
+sameClust <- table(data$blueClust[data$sameOrDiff == 1]) 
 
 ##for people who wanted partners in different clusters
 #don't need to run separately for clusters A and B bc made order arbitrary
-diffClust <- table(data$blueClust[data$sameOrDiff ==1])  
+diffClust <- table(data$blueClust[data$sameOrDiff ==0])  
 
 
 
