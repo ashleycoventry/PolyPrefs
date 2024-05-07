@@ -479,11 +479,11 @@ wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binom
 #use plotzing to graph
 #use plotzing to graph 
 library(plotzing)
-compInvestGraph <- graph_violin("compInvestRaw", "sameOrDiff", 
+compInvestGraph <- graph_violin("compInvest", "wellRounded", 
                               setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner",
                               setxaxislabel = "Partner Cluster",
                               showviolin = TRUE,
-                              setxlevels = c("Difference", "Same"),
+                              setxlevels = c("WellRounded", "Not WellRounded"),
                               setyaxissize = 11,
                               setxaxissize = 11,
                               setytitlesize = 10,
