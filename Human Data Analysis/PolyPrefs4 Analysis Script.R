@@ -430,7 +430,7 @@ investData<- investData[!nacheckInvest,]
 finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
 timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
-
+#graph_violin("finInvestRC", "sameOrDiff", data = investData )
 
 
 ##Q2: is investment related to whether a partner is well-rounded or not (not pre-registered)
@@ -479,11 +479,11 @@ wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binom
 #use plotzing to graph
 #use plotzing to graph 
 library(plotzing)
-compInvestGraph <- graph_violin("compInvest", "wellRounded", 
+compInvestGraph <- graph_violin("compInvestRaw", "sameOrDiff", 
                               setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner",
                               setxaxislabel = "Partner Cluster",
-                              showviolin = FALSE,
-                              setxlevels = c("Well-Rounded", "Not\nWell-Rounded"),
+                              showviolin = TRUE,
+                              setxlevels = c("Difference", "Same"),
                               setyaxissize = 11,
                               setxaxissize = 11,
                               setytitlesize = 10,
