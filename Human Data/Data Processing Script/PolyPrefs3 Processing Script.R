@@ -8,12 +8,13 @@ library(psych)
 library(lmerTest)
 library(lme4)
 library(car)
+library(dplyr)
 
 
 
 
 ###load data###
-data<-read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Raw Data/040423 PolyPrefs3 Raw Data.csv")
+data<-read.csv('Human Data/Raw Data/Poly Prefs Study 3_January 18, 2025_13.35.csv')
 
 
 
@@ -22,7 +23,7 @@ data<-data[-c(1:2),]
 
 
 ###eliminate unnecessary columns
-data<-data[,15:124]
+data<-data[,18:127]
 
 
 
@@ -101,8 +102,25 @@ colnames(data)[14:27] <- c("idealAmbitionBlue", "idealAttractBlue", "idealIntelB
                            "idealSexyOrange", "idealKindOrange", "idealStatusOrange", "idealWealthOrange")
 
 
+###race
+
+data <- data %>%
+  mutate(raceText = case_when(
+    is.na(race) ~ NA_character_, #any NAs stay as NA
+    race == 1 ~ "Asian or Pacific Islander",
+    race == 2 ~ "Black or African American",
+    race == 3 ~ "Hispanic or Latino",
+    race == 4 ~ "Middle Eastern or North African",
+    race == 5 ~ "Native American or American Indian", 
+    race == 6 ~ "White",
+    race == 7 ~ "Prefer not to say",
+    TRUE ~ "Multi-racial", #any combos
+    TRUE ~ NA_character_ # for undefined mappings
+  ))
+
+
 ###change values from character to numeric
-data[,c(1:3, 5, 7:10, 12:29, 31, 33:52, 57:73, 75:90, 92:108)]<-as.numeric(unlist(data[,c(1:3, 5, 7:10, 12:29, 31, 33:52, 57:73, 75:90, 92:108)]))
+data[,c(1, 10, 12:28, 33:52, 57:72, 75:89, 92:107)]<-as.numeric(unlist(data[,c(1, 10, 12:28, 33:52, 57:72, 75:89, 92:107)]))
 
 
 ###recode self and actual partner  ratings into 0-10 scale instead of 1:11(excluding age and gender)
@@ -136,20 +154,37 @@ data<-cbind(data, comps)
 
 ###create group variable 
 #single monogamous, partnered monogamous, single polyamorous, one partner polyamorous more than one partner polyamorous
-data$group<-
-  ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
-         ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
-                ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
-                       #seems like this lumps in "prefer not to say" with ppl with multiple partners --problem? (no one answered pref not to say though)
-                      ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
+
+data <- data %>%
+  mutate(group = case_when(
+    is.na(poly_identity) | is.na(rel_status) ~ "NA", #make NA if either is NA
+    poly_identity == 2 ~ "NA", #make NA if "prefer not to say" for poly identity question
+    poly_identity == 1 & rel_status == 1 ~ "single_poly",          
+    poly_identity == 1 & num_partners == 1 ~ "one_poly",         
+    poly_identity == 1 & num_partners > 1 ~ "multi_poly",          
+    poly_identity == 0 & rel_status == 1 ~ "single_monog",         
+    TRUE ~ "partnered_monog"                                    
+  ))
 
 
+
+
+#Remove people who didn't complete the budget allocation
+
+nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
+data<- data[!nacheck,]
+
+
+#Remove participants who don't identify as either a man or woman
+#or selected "prefer not to say"
+
+data<-data[data$gender<2,]
 
 
 ###save processed dataframe as a csv
 date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("Human Data/Processed Data/", "PolyPrefs3_ProcessedData",date,".csv"), row.names = FALSE)
 
 
 
