@@ -9,7 +9,7 @@ library(dplyr)
 
 
 ###load data###
-data<-read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs/Human Data/Raw Data/Poly Prefs Study 2_January 9, 2025_18.04.csv")
+data<-read.csv("Human Data/Raw Data/Poly Prefs Study 2_January 9, 2025_18.04.csv")
 
 
 ###eliminate title rows 
