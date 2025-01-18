@@ -5,10 +5,11 @@ library(psych)
 library(lmerTest)
 library(lme4)
 library(car)
+library(dplyr)
 
 
 ###load data###
-data<-read.csv("Human Data/Raw Data/11.28.PolyPrefs2Data.csv")
+data<-read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs/Human Data/Raw Data/Poly Prefs Study 2_January 9, 2025_18.04.csv")
 
 
 ###eliminate title rows 
@@ -66,7 +67,21 @@ data$PIN<-as.character(sample(1:nrow(data)))
 
 
 ###race
-#race responses are combined in one column (i.e., "5,6") -- what do we do about that?
+
+data <- data %>%
+  mutate(raceText = case_when(
+    is.na(race) ~ NA_character_, #any NAs stay as NA
+    race == 1 ~ "Asian or Pacific Islander",
+    race == 2 ~ "Black or African American",
+    race == 3 ~ "Hispanic or Latino",
+    race == 4 ~ "Middle Eastern or North African",
+    race == 5 ~ "Native American or American Indian", 
+    race == 6 ~ "White",
+    race == 7 ~ "Prefer not to say",
+    TRUE ~ "Multi-racial", #any combos
+    TRUE ~ NA_character_ # for undefined mappings
+  ))
+
 
 
 ###rename budget allocation columns
@@ -76,8 +91,9 @@ colnames(data)[14:27] <- c("idealAmbitionBlue", "idealAttractBlue", "idealIntelB
                            "idealSexyOrange", "idealKindOrange", "idealStatusOrange", "idealWealthOrange")
 
 
-###change values from character to numeric
-data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]<-as.numeric(unlist(data[,c(1:3, 5, 7:10, 12:28, 30:64, 66:82, 83:98)]))
+###change values from character to numeric 
+#getting NA warning because as characters, empty cells are just empty, but list as NA when numeric
+data[,c(1, 10, 12:27, 31:63, 66:80, 83:97)]<-as.numeric(unlist(data[,c(1, 10, 12:27, 31:63, 66:80, 83:97)]))
 
 
 ###recode self and actual partner  ratings into 0-10 scale instead of 1:11(excluding age and gender)
@@ -111,18 +127,38 @@ data<-cbind(data, comps)
 
 ###create group variable 
 #single monogamous, partnered monogamous, single polyamorous, one partner polyamorous more than one partner polyamorous
-data$group<-
-  ifelse(data$poly_identity == 1 & data$rel_status == 1, "single_poly", 
-         ifelse(data$poly_identity == 1 & data$num_partners == 1, "one_poly",
-               ifelse(data$poly_identity == 1 & data$num_partners != 1, "multi_poly", 
-                      #seems like this lumps in "prefer not to say" with ppl with multiple partners --problem?
-                       ifelse(data$poly_identity == 0 & data$rel_status == 1, "single_monog", "partnered_monog"))))
-                                  #issue with else output bc includes "prefer not to say" responses
+             
+data <- data %>%
+  mutate(group = case_when(
+    is.na(poly_identity) | is.na(rel_status) ~ "NA", #make NA if either is NA
+    poly_identity == 2 ~ "NA", #make NA if "prefer not to say" for poly identity question
+    poly_identity == 1 & rel_status == 1 ~ "single_poly",          
+    poly_identity == 1 & num_partners == 1 ~ "one_poly",         
+    poly_identity == 1 & num_partners > 1 ~ "multi_poly",          
+    poly_identity == 0 & rel_status == 1 ~ "single_monog",         
+    TRUE ~ "partnered_monog"                                    
+  ))
 
-                          
+
+
+#Remove people who didn't do the budget allocation
+
+nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
+data<- data[!nacheck,]
+
+
+#Remove participants who don't identify as either a man or woman
+#or selected "prefer not to say"
+
+data<-data[data$gender<3,]
+
+
+#Recode gender to be 0 and 1 
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
 
 ###save processed dataframe as a csv
 date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-write.csv(data,paste0("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("Human Data/Processed Data/", "PolyPrefs2_ProcessedData",date,".csv"), row.names = FALSE)
 
