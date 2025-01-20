@@ -1,23 +1,34 @@
 #############Polyamorous Mate Preferences 4: Processing Script #################
 ####Ashley J Coventry, Tamsin German, Dan Conroy-Beam#######
 
+#packages
+library(dplyr)
 
 
 
 ###load data 
-data<-read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/PolyPrefs 4/Human Data/Raw Data/Poly Prefs Study 4_January 2, 2024_16.09.csv")
+data<-read.csv("Human Data/Raw Data/Poly Prefs Study 4_January 20, 2025_14.18.csv")
 
 
 ###eliminate title rows 
 data<-data[-c(1:2),]
 
+###only keep needed columns
+data<-data[,18:151]
 
 
-###eliminate paricipants who did not ID as poly
+###only keep participants who still identify as polyamorous
 data <- subset(data, data$poly_identity == "1") 
 
 
-###also eliminate duplicate responses to open-ended since those are likely to be same person
+
+
+###eliminate participants who could be bots (gibberish responses to open-ended question)
+#gibberish or not coded in raw datafile manually (0 = okay, 1 = gibberish)
+data <- subset(data, data$textQuality == "0") 
+
+
+ ###eliminate duplicate responses to open-ended since those are likely to be same person
 
 ##change blank responses to NA
 
@@ -71,8 +82,23 @@ colnames(data)[15:28] <- c("idealAmbitionBlue", "idealAttractBlue", "idealIntelB
 
 
 
+##race
+data <- data %>%
+  mutate(raceText = case_when(
+    is.na(race) ~ NA_character_, #any NAs stay as NA
+    race == 1 ~ "Asian or Pacific Islander",
+    race == 2 ~ "Black or African American",
+    race == 3 ~ "Hispanic or Latino",
+    race == 4 ~ "Middle Eastern or North African",
+    race == 5 ~ "Native American or American Indian", 
+    race == 6 ~ "White",
+    race == 7 ~ "Prefer not to say",
+    TRUE ~ "Multi-racial", #any combos
+  ))
+
+
 ##change values from characters to numeric
-data[,c(1:3, 5, 7:10, 15:30, 32, 34:60, 63:79, 81:96, 98:112, 115:131)]<-as.numeric(unlist(data[,c(1:3, 5, 7:10, 15:30, 32, 34:60, 63:79, 81:96, 98:112, 115:131)]))
+data[,c(1, 10, 15:29, 34:60, 63:78, 81:95, 98:112, 115:130)]<-as.numeric(unlist(data[,c(1, 10, 15:29, 34:60, 63:78, 81:95, 98:112, 115:130)]))
 
 ###recode self and actual partner  ratings into 0-10 scale instead of 1:11(excluding age and gender)
 data[,c(34:35, 37:48, 63:64, 66:77, 81:94, 115:127, 129)] <- (data[,c(34:35, 37:48, 63:64, 66:77, 81:94, 115:127, 129)]-1)
@@ -125,8 +151,19 @@ data$soiGlobal <- rowMeans(data[, c("soi_partners","soi_oneencounter","soi_short
 
 
 
+#Remove people who didn't complete the budget allocation
+nacheck <- apply(data[,15:28], 1, function(x) sum(is.na(x))>0)
+data<- data[!nacheck,]
+
+
+#Remove participants who don't identify as either a man or woman
+#or selected "prefer not to say"
+
+data<-data[data$gender<2,]
+
+
 ###save processed dataframe as a csv
 date<-format(Sys.time(),format="%Y%m%d %H%M%S")
 
-write.csv(data,paste0("/Users/ashle/Desktop/PolyPrefs4Processed Data",date,".csv"), row.names = FALSE)
+write.csv(data,paste0("Human Data/Processed Data/", "PolyPrefs4_ProcessedData",date,".csv"), row.names = FALSE)
 

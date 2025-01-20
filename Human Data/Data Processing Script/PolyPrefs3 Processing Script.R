@@ -115,7 +115,6 @@ data <- data %>%
     race == 6 ~ "White",
     race == 7 ~ "Prefer not to say",
     TRUE ~ "Multi-racial", #any combos
-    TRUE ~ NA_character_ # for undefined mappings
   ))
 
 
