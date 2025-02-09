@@ -13,13 +13,14 @@ library(pwr) # for pwr.chisq.test function
 library(lme4)
 library(ggpubr)
 library(plotzing)
+library(rcompanion) #for cramer's v for fisher's tests
 
 ###set seed###
 set.seed(040623)
 
 
 ###load data###
-data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nosync/Human Data/Processed Data/PolyPrefs3 Processed Data20230404 222801.csv")
+data <- read.csv("Human Data/Processed Data/PolyPrefs3_ProcessedData20250118 125511.csv")
 
 
 #Remove NAs ###
@@ -27,13 +28,6 @@ data <- read.csv("/Users/ashle/Desktop/Research/Polyamory Research/PolyPrefs.nos
 
 nacheck <- apply(data[,14:27], 1, function(x) sum(is.na(x))>0)
 data<- data[!nacheck,]
-
-
-#excluding people who don't identify as either men or women
-
-data<-data[data$gender<2,]
-data <- data[data$orange_gender <2,]
-data <- data[data$blue_gender <2,]
 
 
 ###reshape data wide --> long and only keep columns relevant for kmeans
@@ -45,7 +39,7 @@ longData<-data.table::melt(as.data.table(data),id.vars=c("PIN","gender","age"),
                                  c(14,21), #ambition
                                  c(15,22), #attractiveness
                                  c(16,23), #intelligence
-                                 c(17,24), #good in bed
+                                 c(17,24), #sexy
                                  c(18,25), #kindness
                                  c(19,26), #status
                                  c(20,27))) #wealth
@@ -67,7 +61,7 @@ longData$partner<-as.factor(ifelse(longData$partner==1,"idealBlue","idealOrange"
 
 
 #extract kmeans wSs
-kfitWss<-sapply(1:7,function(x) kmeans(longData[,6:12],x)$tot.withinss)
+kfitWss<-sapply(1:7,function(x) kmeans(longData[,6:12],x, nstart = 100, )$tot.withinss)
 
 #scree plot
 screePlot<-qplot(1:7,kfitWss)
@@ -81,6 +75,7 @@ wssDiffs<-diff(kfitWss)
 
 kFit<-kmeans(longData[,6:12],3)
 longData$kFitab <- kFit$cluster
+longData$kFitab <- as.character(longData$kFitab)
 
 
 ##Create vectors of preference means for each cluster (without age)
@@ -105,20 +100,22 @@ data$orangeClust<-longData$kFitab[longData$partner=="idealOrange"]
 
 ##Determine for each participant whether their orange and blue partners are in the same cluster
 #same = 1, diff = 0
-data$sameOrDiff<-apply(data[,143:144],1,function(x)
+data$sameOrDiff<-apply(data[,144:145],1,function(x)
   sum(duplicated(x))
-)
+) #checking for duplicates (if same cluster = duplicate = 1; if diff clusters = 0)
 
 ##get sameOrDiff as function of gender
 genderDiff<-table(data$sameOrDiff,data$gender)
 
 
 ##Computing average differentness
-avgDiff <- mean(data$sameOrDiff)
+avgDiff <- mean(data$sameOrDiff) #closer to 1 = more same
 
-###create variable listing cluster of each partner 
+##create variable listing cluster of each partner 
+#this combo order is arbitrary (numerically smaller cluster always listed first)
+#arbitrary-ness is necessary for gender, cluster combo chisq later
 
-data$kFitab<-apply(data[,143:144],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
+data$kFitab<-apply(data[,144:145],1,function(x) paste0(sort(as.numeric(x)),collapse=","))
 
 
 ### CHI SQUARE 
@@ -126,17 +123,61 @@ data$kFitab<-apply(data[,143:144],1,function(x) paste0(sort(as.numeric(x)),colla
 #are men and women are choosing combos of partner orange and blue at diff rates?
 
 fisherGender <- fisher.test(table(data$gender, data$kFitab), simulate.p.value = TRUE)
-  #2,2 for men has only 2 people so too small for chi sq
-  #workplace size issue 
+  #some cells too small for chi square
+  #workplace size issue so adding simulate p value
+genderCramerV <- cramerV(table(data$gender, data$kFitab))
+dfCramer <- (nrow(table(data$gender, data$kFitab)) - 1) * (ncol(table(data$gender, data$kFitab)) - 1)
+
 
 
 ##do preferences for partner orange predict preferences for partner blue?
-chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) #yes
-chisqClustW <- cohenW( x = chisqClust$observed, p = chisqClust$expected) #effect size
+fisherClust<-fisher.test(table(data$blueClust, data$orangeClust))
+clustCramerV <- cramerV(table(data$blueClust, data$orangeClust))
+dfCramerClust <- (nrow(table(data$blueClust, data$orangeClust)) - 1) * (ncol(table(data$blueClust, data$orangeClust)) - 1)
 
 
 ##raw numbers in each cluster combo by gender
 clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
+
+
+
+##Proportion of participants with at least 1 partner in specific clusters 
+
+#Create blank columns in data
+data$clust1 <- NA #for cluster 1
+data$clust2<- NA #for cluster 2
+data$clust3 <- NA #for cluster 3
+
+
+#for loop to fill columns
+for(i in 1:NROW(data)){
+  ifelse(data$orangeClust[i] == 1 | data$blueClust[i] == 1, data$clust1[i]<-1, data$clust1[i]<-0)
+  
+}
+
+for(i in 1:NROW(data)){
+  ifelse(data$orangeClust[i] == 2 | data$blueClust[i] == 2, data$clust2[i]<-1, data$clust2[i]<-0)
+  
+}
+
+for(i in 1:NROW(data)){
+  ifelse(data$orangeClust[i] == 3 | data$blueClust[i] == 3, data$clust3[i]<-1, data$clust3[i]<-0)
+  
+}
+
+
+
+chisqClust1 <- chisq.test(table(data$gender, data$clust1)) 
+chisqClust1W <- cohenW( x = chisqClust1$observed, p = chisqClust1$expected) #effect size
+
+chisqClust2 <- chisq.test(table(data$gender, data$clust2)) 
+
+chisqClust3 <- chisq.test(table(data$gender, data$clust3)) 
+chisqClust3W <- cohenW( x = chisqClust3$observed, p = chisqClust3$expected) #effect size
+
+
+
+
 
 
 ###confusion matrices
@@ -256,6 +297,8 @@ MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 
 
 #ggsave("PP3MatrixPlotPanel.jpeg", plot = last_plot(), width = 275, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
+
+
 ### Permuation Analysis ###
 
 
@@ -263,12 +306,13 @@ MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 
 nullDistAvg <- rep(0,100000)
 
 ##for loop to generate data of null dist 
+#creating a null distribution by randomly shuffling cluster assignments
 for(a in 1:100000){
   
   aNull<-sample(data$blueClust)
   bNull<-sample(data$orangeClust)
   
-  #Compute sameordiff
+  #Compute sameordiff (whether cluster A and cluster B are the same or different)
   sodNull<-ifelse(aNull==bNull, 1, 0)
   
   #Compute and saving average differentness
@@ -284,8 +328,6 @@ nullDistHigh<-quantile(nullDistAvg[1:100000],c(0.975))
 nullDistLow<-quantile(nullDistAvg[1:100000],c(0.025)) 
 
 
-#Compute p-value comparing observed sameordiff to null distribution
-pValueDiff <- sum(nullDistAvg < avgDiff) /100000 #more diff than chance? 
 
 
 ###How many ideal partners are in each cluster?
@@ -298,56 +340,51 @@ sameClust <- table(data$blueClust[data$sameOrDiff == 1])
 diffClust <- table(data$blueClust[data$sameOrDiff ==0])  
 
 
-###More Chi Squares: proportion of participants with at least 1 partner in specific clusters 
+###Mate Point Allocation###
 
-##Create blank columns in data
-data$clust1 <- NA #for cluster 1
-data$clust2<- NA #for cluster 2
-data$clust3 <- NA #for cluster 3
+#question: are people who want partners in different clusters allocating a sig different # of points to each partner?
 
+##calculate total # of points allocated per row for traits
 
-##for loop to fill columns
-for(i in 1:NROW(data)){
-  ifelse(data$orangeClust[i] == 1 | data$blueClust[i] == 1, data$clust1[i]<-1, data$clust1[i]<-0)
-  
-}
+# Compute total points allocated to each partner
+data$totalOrange <- rowSums(data[, 21:27], na.rm = TRUE)
+data$totalBlue <- rowSums(data[, 14:20], na.rm = TRUE)
 
-for(i in 1:NROW(data)){
-  ifelse(data$orangeClust[i] == 2 | data$blueClust[i] == 2, data$clust2[i]<-1, data$clust2[i]<-0)
-  
-}
-
-for(i in 1:NROW(data)){
-  ifelse(data$orangeClust[i] == 3 | data$blueClust[i] == 3, data$clust3[i]<-1, data$clust3[i]<-0)
-  
-}
+##compare between partner blue and orange for each participant
+#if blue > orange, give value 1; if blue = orange, give value 0
+#if neither is true ( so blue < orange), give -1. 
+data$alloComp <- sign(data$totalBlue - data$totalOrange)
 
 
+#create dataframe excluding rows where alloComp = 0 
+#(bc we just want to look at unequal distribution for now)
+alloData <- subset(data, alloComp != 0)
 
-chisqClust1 <- chisq.test(table(data$gender, data$clust1)) #sig
-chisqClust1W <- cohenW( x = chisqClust1$observed, p = chisqClust1$expected) #effect size
+#create columns with cluster of high allocation partner and cluster of low allocation partner
 
-chisqClust2 <- chisq.test(table(data$gender, data$clust2)) #sig
-chisqClust2W <- cohenW( x = chisqClust2$observed, p = chisqClust2$expected) #effect size
+alloData$highClust <- ifelse(alloData$alloComp == 1, alloData$blueClust, alloData$orangeClust)
+alloData$lowClust <- ifelse(alloData$alloComp == -1, alloData$blueClust, alloData$orangeClust)
 
-chisqClust3 <- chisq.test(table(data$gender, data$clust3)) #not sig
+#run chisq test with high allo x low allo 
+fisherAllo <- fisher.test(table(alloData$highClust, alloData$lowClust), simulate.p.value = TRUE)
 
-###Ideal gender analysis
+#table (1st variable listed is down side, 2nd is across top of table)
+alloTable <- table(alloData$highClust, alloData$lowClust)
 
 
-#partner blue
 
-chisqIdealGenderBlue <- chisq.test(table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])) 
-chisqIdealGenderBlueW <- cohenW( x = chisqIdealGenderBlue$observed, p = chisqIdealGenderBlue$expected) #effect size
+#run fisher test for allo of only women
+fisherAlloF <- fisher.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])))
 
-idealGenderClustBlue <- table(longData$idealGender[longData$partner == "idealBlue"], longData$kFitab[longData$partner == "idealBlue"])
+alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])
 
-#partner orange
-chisqIdealGenderOrange <- chisq.test(table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])) 
-chisqIdealGenderOrangeW <- cohenW( x = chisqIdealGenderOrange$observed, p = chisqIdealGenderOrange$expected) #effect size
-chisqIdealGenderOrangePWR <- pwr.chisq.test(w = 0.1782, N =223, df = 2, sig.level = .05, power = )
 
-idealGenderClustOrange <- table(longData$idealGender[longData$partner == "idealOrange"], longData$kFitab[longData$partner == "idealOrange"])
+#run chisq test for allo of only men
+fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) 
+
+alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
+
+
 
 
 
@@ -516,86 +553,4 @@ panelPlot<-ggarrange(plot2, plot1, plot3, nrow=1, ncol=3,font.label = list(size 
 
 
 
-###Mate Point Allocation###
-
-#question: are people who want partners in different clusters allocating a sig different # of points to each partner?
-
-##calculate total # of points allocated per row for traits
-
-#for partner Orange
-data$totalOrange <- NA
-for(i in 1:nrow(data)) {
-  data$totalOrange[i] <- sum(data[i, 21:27])
-}
-
-#for partner Blue
-data$totalBlue <- NA
-for(i in 1:nrow(data)) {
-  data$totalBlue[i] <- sum(data[i, 14:20])
-}
-
-
-##compare between partner blue and orange for each participant
-data$alloComp <- NA
-
-#if blue > orange, give value 1; if blue = orange, give value 0
-#if neither is true ( so blue < orange), give -1. 
-for(i in 1:nrow(data)){
-  if(data$totalBlue[i] > data$totalOrange[i]) {
-    data$alloComp[i] <- 1 
-  } else {
-    if(data$totalBlue[i] == data$totalOrange[i]) {
-      data$alloComp[i] <- 0
-    } else{
-      data$alloComp[i] <- -1 
-    }
-  }
-}
-
-
-#create dataframe excluding rows where alloComp = 0 (bc we just want to look at unequal distribution for now)
-alloData <- data[data$alloComp != 0,]
-
-
-#create columns with cluster of high allocation partner and cluster of low allocation partner
-
-alloData$highClust <- NA
-alloData$lowClust <- NA
-
-for(i in 1:nrow(alloData)){
-  if(alloData$alloComp[i] == 1){
-    alloData$highClust[i] <- alloData$blueClust[i]
-  } else {
-    alloData$highClust[i] <- alloData$orangeClust[i]
-  }
-  
-}
-
-for(i in 1:nrow(alloData)){
-  if(alloData$alloComp[i] == -1){
-    alloData$lowClust[i] <- alloData$blueClust[i]
-  } else {
-    alloData$lowClust[i] <- alloData$orangeClust[i]
-  }
-  
-}
-
-#run chisq test with high allo x low allo 
-chisqAllo <- chisq.test((table(alloData$highClust, alloData$lowClust))) #not sig
-
-#table (1st variable listed is down side, 2nd is across top of table)
-alloTable <- table(alloData$highClust, alloData$lowClust)
-
-
-
-#run fisher test for allo of only women
-fisherAlloF <- fisher.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])))
-
-alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])
-
-
-#run chisq test for allo of only men
-fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) 
-
-alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
 
