@@ -12,7 +12,6 @@ library(rcompanion) #for cohenW test
 library(pwr) # for pwr.chisq.test function
 library(lme4)
 library(ggpubr)
-library(plotzing)
 library(rcompanion) #for cramer's v for fisher's tests
 
 ###set seed###
@@ -73,7 +72,7 @@ wssDiffs<-diff(kfitWss)
 
 ##Add this classification to the original dataframe
 
-kFit<-kmeans(longData[,6:12],3)
+kFit<-kmeans(longData[,6:12],2)
 longData$kFitab <- kFit$cluster
 longData$kFitab <- as.character(longData$kFitab)
 
@@ -122,18 +121,15 @@ data$kFitab<-apply(data[,144:145],1,function(x) paste0(sort(as.numeric(x)),colla
 
 #are men and women are choosing combos of partner orange and blue at diff rates?
 
-fisherGender <- fisher.test(table(data$gender, data$kFitab), simulate.p.value = TRUE)
-  #some cells too small for chi square
-  #workplace size issue so adding simulate p value
-genderCramerV <- cramerV(table(data$gender, data$kFitab))
-dfCramer <- (nrow(table(data$gender, data$kFitab)) - 1) * (ncol(table(data$gender, data$kFitab)) - 1)
+chisqGender <- chisq.test(table(data$gender, data$kFitab))
+chisqGenderW <- cohenW(x = chisqGender$observed, p = chisqGender$expected) #effect size
+
 
 
 
 ##do preferences for partner orange predict preferences for partner blue?
-fisherClust<-fisher.test(table(data$blueClust, data$orangeClust))
-clustCramerV <- cramerV(table(data$blueClust, data$orangeClust))
-dfCramerClust <- (nrow(table(data$blueClust, data$orangeClust)) - 1) * (ncol(table(data$blueClust, data$orangeClust)) - 1)
+chisqClust<-chisq.test(table(data$blueClust, data$orangeClust)) 
+chisqClustW <- cohenW(x = chisqClust$observed, p = chisqClust$expected)  #effect size
 
 
 ##raw numbers in each cluster combo by gender
@@ -146,7 +142,6 @@ clustComboGender<-table(data$blueClust,data$orangeClust,data$gender)
 #Create blank columns in data
 data$clust1 <- NA #for cluster 1
 data$clust2<- NA #for cluster 2
-data$clust3 <- NA #for cluster 3
 
 
 #for loop to fill columns
@@ -160,10 +155,6 @@ for(i in 1:NROW(data)){
   
 }
 
-for(i in 1:NROW(data)){
-  ifelse(data$orangeClust[i] == 3 | data$blueClust[i] == 3, data$clust3[i]<-1, data$clust3[i]<-0)
-  
-}
 
 
 
@@ -171,131 +162,10 @@ chisqClust1 <- chisq.test(table(data$gender, data$clust1))
 chisqClust1W <- cohenW( x = chisqClust1$observed, p = chisqClust1$expected) #effect size
 
 chisqClust2 <- chisq.test(table(data$gender, data$clust2)) 
-
-chisqClust3 <- chisq.test(table(data$gender, data$clust3)) 
-chisqClust3W <- cohenW( x = chisqClust3$observed, p = chisqClust3$expected) #effect size
+chisqClust2W <- cohenW( x = chisqClust2$observed, p = chisqClust2$expected) #effect size
 
 
 
-
-
-
-###confusion matrices
-#(rearrange factor levels for well rounded in middle, relabel)
-
-##overall clust combo frequency
-#create matrix dataframe
-overallMatrix <- data.frame(((table(data$blueClust, data$orangeClust))/sum(table(data$blueClust, data$orangeClust)))*100)
-#relabel column names
-colnames(overallMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
-#round all numbers to 2 decimal places
-overallMatrix[,3] <-round(overallMatrix[,3],2) #the "-1" excludes column 1
-
-#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
-matrixOrder <- c(1, 3, 2)
-overallMatrix$blueCluster <- factor(overallMatrix$blueCluster, levels = matrixOrder)
-overallMatrix$orangeCluster <- factor(overallMatrix$orangeCluster, levels = matrixOrder)
-
-#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
-overallMatrix[2,3] <- overallMatrix[2,3]+ overallMatrix[4,3]
-overallMatrix[4,3] <- NA
-
-overallMatrix[3,3] <- overallMatrix[3,3] + overallMatrix[7,3]
-overallMatrix[7,3] <- NA
-
-overallMatrix[8,3] <- overallMatrix[8,3] + overallMatrix[6,3]
-overallMatrix[6,3] <- NA
-
-#plot matrix
-overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
-  geom_tile(color = "white") +
-  geom_text(label = overallMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
-  scale_y_discrete(labels = c('Good in Bed & Attractive','Well-Rounded','Wealthy & Kind')) +
-  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
-
-#ggsave("overallMatrix.jpeg", plot=last_plot(), width=225, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
-
-
-
-##clust combo freq by gender
-
-#men
-
-#create matrix dataframe
-maleMatrix <- data.frame(((table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1]))/sum(table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1])))*100)
-#relabel column names
-colnames(maleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
-#round all numbers to 2 decimal places
-maleMatrix[,3] <-round(maleMatrix[,3],2)
-
-#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
-maleMatrix$blueCluster <- factor(maleMatrix$blueCluster, levels = matrixOrder)
-maleMatrix$orangeCluster <- factor(maleMatrix$orangeCluster, levels = matrixOrder)
-
-#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
-maleMatrix[2,3] <- maleMatrix[2,3]+ maleMatrix[4,3]
-maleMatrix[4,3] <- NA
-
-maleMatrix[3,3] <- maleMatrix[3,3] + maleMatrix[7,3]
-maleMatrix[7,3] <- NA
-
-maleMatrix[8,3] <- maleMatrix[8,3] + maleMatrix[6,3]
-maleMatrix[6,3] <- NA
-
-#plot matrix
-maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
-  geom_tile(color = "white") +
-  geom_text(label = maleMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
-  scale_y_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
-  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13)) +
-  ggtitle("(B) Male Participants")
-
-
-#women
-
-#create matrix dataframe
-femaleMatrix <- data.frame(((table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0]))/sum(table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0])))*100)
-#relabel column names
-colnames(femaleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
-#round all numbers to 2 decimal places
-femaleMatrix[,3] <-round(femaleMatrix[,3],2)
-
-#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
-femaleMatrix$blueCluster <- factor(femaleMatrix$blueCluster, levels = matrixOrder)
-femaleMatrix$orangeCluster <- factor(femaleMatrix$orangeCluster, levels = matrixOrder)
-
-#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
-femaleMatrix[2,3] <- femaleMatrix[2,3]+ femaleMatrix[4,3]
-femaleMatrix[4,3] <- NA
-
-femaleMatrix[3,3] <- femaleMatrix[3,3] + femaleMatrix[7,3]
-femaleMatrix[7,3] <- NA
-
-femaleMatrix[8,3] <- femaleMatrix[8,3] + femaleMatrix[6,3]
-femaleMatrix[6,3] <- NA
-
-#plot matrix
-femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
-  geom_tile(color = "white") +
-  geom_text(label = femaleMatrix$comboFrequency)+
-  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
-  scale_y_discrete(labels = c('Good in Bed\n & Attractive','Well-Rounded','Wealthy & Kind')) +
-  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))+
-  ggtitle("(A) Female Participants")
-
-#panel plot of both graphs
-MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 2, 
-                             common.legend = TRUE, legend = "right")
-
-#ggsave("PP3MatrixPlotPanel.jpeg", plot = last_plot(), width = 275, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
 
 
@@ -366,21 +236,20 @@ alloData$highClust <- ifelse(alloData$alloComp == 1, alloData$blueClust, alloDat
 alloData$lowClust <- ifelse(alloData$alloComp == -1, alloData$blueClust, alloData$orangeClust)
 
 #run chisq test with high allo x low allo 
-fisherAllo <- fisher.test(table(alloData$highClust, alloData$lowClust), simulate.p.value = TRUE)
+chisqAllo <- chisq.test(table(alloData$highClust, alloData$lowClust))
 
 #table (1st variable listed is down side, 2nd is across top of table)
 alloTable <- table(alloData$highClust, alloData$lowClust)
 
 
 
-#run fisher test for allo of only women
-fisherAlloF <- fisher.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])))
+chisqAlloF <- chisq.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])))
 
 alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])
 
 
 #run chisq test for allo of only men
-fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) 
+chisqAlloM <- chisq.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) 
 
 alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
 
@@ -434,74 +303,22 @@ emotCloseMeans <- tapply(investData$emotDeviation, investData$sameOrDiff, mean)
 
 
 
-
-##Q2: does this investment vary by cluster?
-##wellRounded investment
-#is whether a partner is in the well-rounded cluster predicted by investment level
-
-#create wellRounded variable (0 = wellRounded, 1 = not)
-
-investData$wellRounded <- 
-  ifelse(investData$cluster == 3, 0, 1)
-
-#create recoded investment variable (so high number is just more investment in that partner, instead of in orange)
-
-investData$finInvestRC <- investData$finInvest #duplicate finInvest variable
-investData$timeInvestRC <- investData$timeInvest #duplicate timeInvest variable
-investData$emotCloseRC <- investData$emotClose #duplicate emotClose variable
-
-
-investData$finInvestRC <- ifelse(investData$partner == 'blueClust', 
-                                 car::recode(investData$finInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
-                                 investData$finInvestRC)
-
-investData$timeInvestRC <- ifelse(investData$partner == 'blueClust', 
-                                 car::recode(investData$timeInvestRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
-                                 investData$timeInvestRC)
-
-investData$emotCloseRC <- ifelse(investData$partner == 'blueClust', 
-                                  car::recode(investData$emotCloseRC, "1=7; 2=6; 3=5; 4=4; 5=3; 6=2;7=1"), 
-                                  investData$emotCloseRC)
-
-
-#create composite investment variable (averaging 3 together)
-
-investData$compInvest <- rowMeans(investData[,13:15])
-
-#glm predicting wellrounded from investment
-investData$partner <- as.factor(investData$partner)
-
-wellRoundedInvestGLM <- glmer(wellRounded ~ compInvest + (1|PIN), family = binomial(), data = investData)
-
-
-
-#use plotzing to graph 
-compInvestGraph <- graph_violin("compInvest", "wellRounded", 
-                              setyaxislabel = "Investment in Partner\n(1 = entirely in other partner; 7 = entirely in this partner)",
-                              setxaxislabel = "Partner Cluster",
-                              showviolin = FALSE,
-                              setxlevels = c("Well-Rounded", "Not\nWell-Rounded"),
-                              setyaxissize = 11,
-                              setxaxissize = 11,
-                              setytitlesize = 11,
-                              setxtitlesize = 11,
-                              data = investData)
-
-
-
-#ggsave("PP3InvestPlot.jpeg", plot=last_plot(), width=150, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 #save investment data frame to later compare investment results to those of poly study
 #write.csv(investData,paste0("/Users/ashle/Desktop/PolyPrefs3InvestData.csv"), row.names = FALSE)
 
 
 
+
+
+#####PLOTS######
+
 ### Plotting CLusters###
 
 ##plot bar graph with each trait mean for each 3 clusters (# clusters depends on scree)
 #clusters aren't mapping on in the right order! double check centers with graph after running
-meanTrait <- c(clustCenters[1,], clustCenters[2,], clustCenters[3,])
-mateType <-c(rep("1", 7), rep("2", 7), rep("3", 7))
-trait <- c(rep(c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources"), 3))  
+meanTrait <- c(clustCenters[1,], clustCenters[2,])
+mateType <-c(rep("1", 7), rep("2", 7))
+trait <- c(rep(c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources"), 2))  
 plotting <- data.frame(meanTrait, mateType, trait)
 kFitPlot <- ggplot(data=plotting, aes(x=mateType, y=meanTrait, fill=trait)) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
@@ -517,40 +334,132 @@ meanTrait1 <- clustCenters[1,]
 trait1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
 plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3") +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4") +
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90))+
-  ggtitle("(B) Good in Bed and Attractive")
+  ggtitle("Well-Rounded")
 
 #cluster 2 
 meanTrait2 <- clustCenters[2,]
 trait2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
 plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+ 
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3")+ 
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
   theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
   theme(axis.text.x = element_text(angle = 90)) +
-  ggtitle("(A) Wealthy and Kind")
-
-#cluster 3 
-meanTrait3 <- clustCenters[3,]
-trait3 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-plotting3 <- data.frame(meanTrait3, trait3)
-plot3 <- ggplot(data=plotting3, aes(x=trait3, y=meanTrait3)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4")+ 
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ggtitle("(C) Well-Rounded")
+  ggtitle("Good in Bed & Attractive")
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot2, plot1, plot3, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
 
 #ggsave("PP3PanelPlot.jpeg", plot = last_plot(), width = 250, height = 159, units = "mm", path = "/Users/ashle/Desktop", scale = 1, dpi = 300, limitsize = TRUE)
 
 
+
+
+
+###confusion matrices
+#(rearrange factor levels for well rounded in middle, relabel)
+
+##overall clust combo frequency
+#create matrix dataframe
+overallMatrix <- data.frame(((table(data$blueClust, data$orangeClust))/sum(table(data$blueClust, data$orangeClust)))*100)
+#relabel column names
+colnames(overallMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+overallMatrix[,3] <-round(overallMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+matrixOrder <- c(1, 2)
+overallMatrix$blueCluster <- factor(overallMatrix$blueCluster, levels = matrixOrder)
+overallMatrix$orangeCluster <- factor(overallMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+overallMatrix[2,3] <- overallMatrix[2,3]+ overallMatrix[3,3]
+overallMatrix[3,3] <- NA
+
+
+#plot matrix
+overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = overallMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13))
+
+#ggsave("overallMatrix.jpeg", plot=last_plot(), width=225, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+
+
+
+##clust combo freq by gender
+
+#men
+
+#create matrix dataframe
+maleMatrix <- data.frame(((table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1]))/sum(table(data$blueClust[data$gender == 1], data$orangeClust[data$gender == 1])))*100)
+#relabel column names
+colnames(maleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+maleMatrix[,3] <-round(maleMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+maleMatrix$blueCluster <- factor(maleMatrix$blueCluster, levels = matrixOrder)
+maleMatrix$orangeCluster <- factor(maleMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+maleMatrix[2,3] <- maleMatrix[2,3]+ maleMatrix[3,3]
+maleMatrix[3,3] <- NA
+
+#plot matrix
+maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = maleMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13)) +
+  ggtitle("(B) Male Participants")
+
+
+#women
+
+#create matrix dataframe
+femaleMatrix <- data.frame(((table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0]))/sum(table(data$blueClust[data$gender == 0], data$orangeClust[data$gender == 0])))*100)
+#relabel column names
+colnames(femaleMatrix) <- c("blueCluster", "orangeCluster", "comboFrequency")
+#round all numbers to 2 decimal places
+femaleMatrix[,3] <-round(femaleMatrix[,3],2)
+
+#switch the order of the clusters in the chart (so, hot, then WR, then rich. 1, 2, 3 --> 1, 3, 2)
+femaleMatrix$blueCluster <- factor(femaleMatrix$blueCluster, levels = matrixOrder)
+femaleMatrix$orangeCluster <- factor(femaleMatrix$orangeCluster, levels = matrixOrder)
+
+#combine cluster combos so only occur once (e.g., 2,1 = 1,2 & 2,3 = 3,2)
+femaleMatrix[2,3] <- femaleMatrix[2,3]+ femaleMatrix[3,3]
+femaleMatrix[3,3] <- NA
+
+
+#plot matrix
+femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, fill = comboFrequency)) +
+  geom_tile(color = "white") +
+  geom_text(label = femaleMatrix$comboFrequency)+
+  scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
+  theme(text = element_text(size = 13))+
+  ggtitle("(A) Female Participants")
+
+#panel plot of both graphs
+MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 2, 
+                             common.legend = TRUE, legend = "right")
+
+#ggsave("PP3MatrixPlotPanel.jpeg", plot = last_plot(), width = 275, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
 
 
