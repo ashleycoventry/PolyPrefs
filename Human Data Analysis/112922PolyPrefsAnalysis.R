@@ -277,8 +277,9 @@ plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "darkorchid3")+
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
+  ggtitle("Well-Rounded")
 
 
 #cluster 2 
@@ -288,11 +289,12 @@ plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3")+ 
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
-  theme(plot.title = element_text(size = 14), axis.text.x = element_text(angle = 90))
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level") +ylim(0,8) +
+  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
+  ggtitle("Good in Bed & Attractive")
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
 
 
 
@@ -357,12 +359,12 @@ overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster
   geom_tile(color = "white") +
   geom_text(label = overallMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Clust 1','Clust 2')) +
-  scale_y_discrete(labels = c('Clust 1','Clust 2')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
   theme(text = element_text(size = 13))
 
-#ggsave("overallMatrix.jpeg", plot=last_plot(), width=225, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+#ggsave("overallMatrix.jpeg", plot=last_plot(), width=150, height=100, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
@@ -391,10 +393,11 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
   geom_tile(color = "white") +
   geom_text(label = maleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Clust 1','Clust 2')) +
-  scale_y_discrete(labels = c('Clust 1','Clust 2')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(B) Male Participants")
 
 
 #women
@@ -421,11 +424,16 @@ femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, 
   geom_tile(color = "white") +
   geom_text(label = femaleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Clust 1','Clust 2')) +
-  scale_y_discrete(labels = c('Clust 1','Clust 2')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
-  theme(text = element_text(size = 13))
+  theme(text = element_text(size = 13))+
+  ggtitle("(A) Female Participants")
 
 
+#panel plot of both of these graphs
+MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow=1, ncol=2, 
+                             common.legend = TRUE, legend = "right")
+#ggsave("PP2MatrixPlotPanel.jpeg", plot=last_plot(), width=275, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
