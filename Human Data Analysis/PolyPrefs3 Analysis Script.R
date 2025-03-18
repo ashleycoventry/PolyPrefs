@@ -217,8 +217,8 @@ diffClust <- table(data$blueClust[data$sameOrDiff ==0])
 ##calculate total # of points allocated per row for traits
 
 # Compute total points allocated to each partner
-data$totalOrange <- rowSums(data[, 21:27], na.rm = TRUE)
-data$totalBlue <- rowSums(data[, 14:20], na.rm = TRUE)
+data$totalOrange <- rowSums(data[, 22:28], na.rm = TRUE)
+data$totalBlue <- rowSums(data[, 15:21], na.rm = TRUE)
 
 ##compare between partner blue and orange for each participant
 #if blue > orange, give value 1; if blue = orange, give value 0
@@ -243,19 +243,6 @@ alloTable <- table(alloData$highClust, alloData$lowClust)
 
 
 
-chisqAlloF <- chisq.test((table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])))
-
-alloTableF <- table(alloData$highClust[alloData$sex == 0], alloData$lowClust[alloData$sex == 0])
-
-
-#run chisq test for allo of only men
-chisqAlloM <- chisq.test((table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1]))) 
-
-alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
-
-
-
-
 
 ###Investment Questions Analysis###
 
@@ -265,7 +252,7 @@ alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[all
 #melt function to have two rows (1 for orange, 1 for blue) with each trait rating
 
 investData<-data.table::melt(as.data.table(data),id.vars=c("PIN", "gender", "fin_invest","time_invest","emot_close", "sameOrDiff"), #sameOrDiff: same = 1, diff = 0
-               measure.vars=list(c(143,144))) #clust (first listed = blue, second = orange)
+               measure.vars=list(c(144,145))) #clust (first listed = blue, second = orange)
 
 #renaming columns
 colnames(investData) <- c("PIN", "gender", "finInvest", "timeInvest", "emotClose", "sameOrDiff", "partner", "cluster")
@@ -289,17 +276,39 @@ investData<- investData[!nacheckInvest,]
 
 
 #financial investment
-finInvestAnova <- aov(finDeviation ~ sameOrDiff + gender, data = investData)
-finInvestMeans <- tapply(investData$finDeviation, investData$sameOrDiff, mean)
+finInvestAnova <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
+finInvestMeans <- tapply(investData$finDeviation, list(investData$sameOrDiff, investData$gender), mean) 
+#first variable listed in the list function is down the sides in the output, second is across
+finInvestSDs <- tapply(investData$finDeviation, list(investData$sameOrDiff, investData$gender), sd)
+
+#plot interaction
+finInvestIntPlot <- ggplot(investData, aes(x = sameOrDiff, y = finDeviation, fill = gender))+
+  geom_boxplot(position = position_dodge(width = 0.9), width = 0.2, color = "black", outlier.shape = NA) + 
+  scale_fill_manual(values = c("0" = "#8E44AD", "1" = "#2980B9"), 
+                    labels = c("Female", "Male")) +
+  scale_x_discrete(labels = c("0" = "Different", "1" = "Same")) +
+  scale_y_continuous(limits = c(0, 3.0)) +
+  labs(x = "Ideal Partner Cluster (Same Or Different)", y = "Deviation from Equal Investment", 
+       fill = "Participant Gender") +
+  theme_minimal()+theme(
+    axis.title = element_text(size = 16),  
+    axis.text = element_text(size = 14),   
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14)  
+  )
+
+#ggsave("PP3FinInvestIntPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
 
 
-timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
+timeInvestAnova <- aov(timeDeviation ~ sameOrDiff+gender, data = investData)
 timeInvestMeans <- tapply(investData$timeDeviation, investData$sameOrDiff, mean)
+timeInvestSDs <- tapply(investData$timeDeviation, investData$sameOrDiff, sd)
 
 
-emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
+emotCloseAnova <- aov(emotDeviation ~ sameOrDiff+gender, data = investData)
 emotCloseMeans <- tapply(investData$emotDeviation, investData$sameOrDiff, mean)
+emotCloseSDs <- tapply(investData$emotDeviation, investData$sameOrDiff, sd)
 
 
 
@@ -336,8 +345,8 @@ plotting1 <- data.frame(meanTrait1, trait1)
 plot1 <- ggplot(data=plotting1, aes(x=trait1, y=meanTrait1)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "springgreen4") +
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level")  +ylim(0,8) +
-  theme(axis.text.x = element_text(angle = 90))+
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
   ggtitle("Well-Rounded")
 
 #cluster 2 
@@ -347,14 +356,14 @@ plotting2 <- data.frame(meanTrait2, trait2)
 plot2 <- ggplot(data=plotting2, aes(x=trait2, y=meanTrait2)) +
   geom_bar(stat="identity", color="black", position=position_dodge(), fill = "orangered3")+ 
   geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 14) + xlab("Trait") + ylab("Absolute Desired Trait Level") +ylim(0,8) +
-  theme(axis.text.x = element_text(angle = 90)) +
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level") +ylim(0,8) +
+  theme(plot.title = element_text(size = 10),axis.text.x = element_text(angle = 90)) +
   ggtitle("Good in Bed & Attractive")
 
 #combine clusters into one graph
-panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=3,font.label = list(size = 14, color = "black"))
+panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
 
-#ggsave("PP3PanelPlot.jpeg", plot = last_plot(), width = 250, height = 159, units = "mm", path = "/Users/ashle/Desktop", scale = 1, dpi = 300, limitsize = TRUE)
+#ggsave("PP3panelPlot.jpeg", plot=last_plot(), width=150, height=125, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
@@ -386,12 +395,12 @@ overallMatrixPlot <- ggplot(overallMatrix, aes(x= blueCluster, y = orangeCluster
   geom_tile(color = "white") +
   geom_text(label = overallMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
-  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
   theme(text = element_text(size = 13))
 
-#ggsave("overallMatrix.jpeg", plot=last_plot(), width=225, height=150, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+#ggsave("PP3overallMatrix.jpeg", plot=last_plot(), width=150, height=100, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
@@ -419,8 +428,8 @@ maleMatrixPlot <- ggplot(maleMatrix, aes(x= blueCluster, y = orangeCluster, fill
   geom_tile(color = "white") +
   geom_text(label = maleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
-  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
   theme(text = element_text(size = 13)) +
   ggtitle("(B) Male Participants")
@@ -449,8 +458,8 @@ femaleMatrixPlot <- ggplot(femaleMatrix, aes(x= blueCluster, y = orangeCluster, 
   geom_tile(color = "white") +
   geom_text(label = femaleMatrix$comboFrequency)+
   scale_fill_gradient(low = "white", high = "#009900", na.value = "whitesmoke") +
-  scale_x_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
-  scale_y_discrete(labels = c('Well-Rounded','Good in Bed & Attractive')) +
+  scale_x_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
+  scale_y_discrete(labels = c('Well-Rounded','Good in Bed \n & Attractive')) +
   labs(x = "Partner Blue", y = "Partner Orange", fill = "Combination Freq.") +
   theme(text = element_text(size = 13))+
   ggtitle("(A) Female Participants")
