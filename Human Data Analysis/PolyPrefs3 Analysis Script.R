@@ -164,6 +164,9 @@ chisqClust1W <- cohenW( x = chisqClust1$observed, p = chisqClust1$expected) #eff
 chisqClust2 <- chisq.test(table(data$gender, data$clust2)) 
 chisqClust2W <- cohenW( x = chisqClust2$observed, p = chisqClust2$expected) #effect size
 
+#power analysis on smallest effect size (chisqClust2W) for poly study
+chisqClust2PWR <- pwr.chisq.test(w = chisqClust2W,N = 169, df = 1, sig.level = .05, power = ) #161 = sample size for poly sample
+
 
 
 
@@ -469,6 +472,143 @@ MatrixPlotPanel <- ggarrange(femaleMatrixPlot, maleMatrixPlot, nrow = 1, ncol = 
                              common.legend = TRUE, legend = "right")
 
 #ggsave("PP3MatrixPlotPanel.jpeg", plot = last_plot(), width = 275, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+
+
+
+
+
+
+#####Alternative cluster analysis
+
+##make data wide (1 row per participant)
+wideData <- data[,c(113, 5, 14:27, 29, 31)]
+
+
+
+#Cluster Analysis
+
+
+#extract kmeans wSs
+kfitWssAlt<-sapply(1:7,function(x) kmeans(wideData[,3:16],x, nstart= 100)$tot.withinss)
+
+#scree plot
+screePlotAlt<-qplot(1:7,kfitWssAlt)
+
+
+##compute differences in within ss across k for k-means clustering
+wssDiffsAlt<-diff(kfitWssAlt)
+
+
+##Add this classification to the original dataframe
+
+kFitAlt<-kmeans(wideData[,3:16],2)
+wideData$kFitAlt <- kFitAlt$cluster
+
+
+##Create vectors of preference means for each cluster (without age)
+clustCentersAlt<-kFitAlt$centers
+
+##Look at gender breakdown by cluster
+clustGenderAlt<-table(wideData$gender,wideData$kFitAlt)
+
+##compute variance between trait ratings for each cluster
+#to see if maybe one cluster is more well rounded than others
+clustVarsAlt<-apply(clustCentersAlt,1,var)
+
+
+##multipanel figure
+#first create individual plot for each cluster
+
+#cluster 1 (title will change based on clusters)
+meanTraitAlt1 <- clustCentersAlt[1,]
+traitAlt1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+partner <- c(rep("Blue", 7), rep("Orange", 7))
+plottingAlt1 <- data.frame(meanTraitAlt1, traitAlt1, partner)
+plotAlt1 <- ggplot(data=plottingAlt1, aes(x=traitAlt1, y=meanTraitAlt1, fill = partner)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(width = .9))+
+  scale_fill_manual(values = c("Blue" = "lightblue", "Orange" = "#FFC067")) +
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
+  ggtitle("Cluster 1")
+
+
+#cluster 2 
+meanTraitAlt2 <- clustCentersAlt[2,]
+traitAlt2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+partner <- c(rep("Blue", 7), rep("Orange", 7))
+plottingAlt2 <- data.frame(meanTraitAlt2, traitAlt2, partner)
+plotAlt2 <- ggplot(data=plottingAlt2, aes(x=traitAlt2, y=meanTraitAlt2, fill = partner)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(width = .9))+
+  scale_fill_manual(values = c("Blue" = "lightblue", "Orange" = "#FFC067")) +
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
+  ggtitle("Cluster 2")
+
+#combine clusters into one graph
+panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
+
+
+
+#alternative graphing
+#cluster 1 
+meanTraitAlt1Blue <- clustCentersAlt[1,1:7]
+traitAlt1Blue <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plottingAlt1Blue <- data.frame(meanTraitAlt1Blue, traitAlt1Blue)
+plotAlt1Blue <- ggplot(data=plottingAlt1Blue, aes(x=traitAlt1Blue, y=meanTraitAlt1Blue)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "lightblue")+
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
+  ggtitle("Cluster 1 Blue")
+
+meanTraitAlt1Orange <- clustCentersAlt[1,8:14]
+traitAlt1Orange <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plottingAlt1Orange <- data.frame(meanTraitAlt1Orange, traitAlt1Orange)
+plotAlt1Orange <- ggplot(data=plottingAlt1Orange, aes(x=traitAlt1Orange, y=meanTraitAlt1Orange)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "#FFC067")+
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
+  ggtitle("Cluster 1 Orange")
+
+
+#combine clusters into one graph
+panelPlotAltCluster1<-ggarrange(plotAlt1Blue, plotAlt1Orange, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
+
+
+#cluster 2
+meanTraitAlt2Blue <- clustCentersAlt[2,1:7]
+traitAlt2Blue <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plottingAlt2Blue <- data.frame(meanTraitAlt2Blue, traitAlt2Blue)
+plotAlt2Blue <- ggplot(data=plottingAlt2Blue, aes(x=traitAlt2Blue, y=meanTraitAlt2Blue)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "lightblue")+
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
+  ggtitle("Cluster 2 Blue")
+
+meanTraitAlt2Orange <- clustCentersAlt[2,8:14]
+traitAlt2Orange <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
+plottingAlt2Orange <- data.frame(meanTraitAlt2Orange, traitAlt2Orange)
+plotAlt2Orange <- ggplot(data=plottingAlt2Orange, aes(x=traitAlt2Orange, y=meanTraitAlt2Orange)) +
+  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "#FFC067")+
+  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
+  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
+  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
+  ggtitle("Cluster 2 Orange")
+
+
+#combine clusters into one graph
+panelPlotAltClustersSeparated<-ggarrange(plotAlt1Blue, plotAlt1Orange, plotAlt2Blue, plotAlt2Orange, nrow=2, ncol=2,font.label = list(size = 12, color = "black"))
+
+#ggsave("PP3PlotPanelAltAnalysis.jpeg", plot=last_plot(), width=275, height=275, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
+
+
+
+
+
 
 
 
