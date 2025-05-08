@@ -24,7 +24,7 @@ nacheck <- apply(data[,15:28], 1, function(x) sum(is.na(x))>0)
 data<- data[!nacheck,] 
 
 
-#excluding people and ideal partners who don't identify as either men or women
+#excluding people who don't identify as either men or women
 
 data<-data[data$gender<2,]
 
