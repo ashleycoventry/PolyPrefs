@@ -316,8 +316,10 @@ emotCloseSDs <- tapply(investData$emotDeviation, investData$sameOrDiff, sd)
 
 
 #save investment data frame to later compare investment results to those of poly study
-#write.csv(investData,paste0("/Users/ashle/Desktop/PolyPrefs3InvestData.csv"), row.names = FALSE)
+#write.csv(investData,paste0("Human Data/Processed Data/PP3InvestData.csv"), row.names = FALSE)
 
+###save full data for comparison with poly sample from later study (to combine with prev study monog data)
+#write.csv(data, "Human Data/Processed Data/PP3AnalyzedData.csv", row.names = FALSE)
 
 
 
