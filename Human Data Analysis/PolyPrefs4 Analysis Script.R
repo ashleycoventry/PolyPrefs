@@ -332,13 +332,6 @@ panelPlot<-ggarrange(plot2, plot1, nrow=1, ncol=2,font.label = list(size = 10, c
 
 
 
-
-
-
-
-
-
-
 ###Investment Questions Analysis###
 
 ##Q1: is there a greater deviation from the center (equal invest.) if 2 partners are in diff clusters
@@ -376,6 +369,36 @@ finInvestAnova <- aov(finDeviation ~ sameOrDiff+gender, data = investData)
 
 timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
+
+
+#####Monog vs Poly comparison
+
+#loading in PP2 & 3 data (monog samples)
+pp2 <- read.csv("Human Data/Processed Data/PP2AnalyzedData.csv")
+pp3 <- read.csv("Human Data/Processed Data/PP3AnalyzedData.csv")
+
+#create pp4 poly comparison df
+pp4Comparison <- data[,c(2, 5, 8, 10, 171:174)]
+
+#filter out unnecessary cols of pp2 and pp3 data
+pp2 <- pp2[,c(2, 5, 8, 10, 134:137)] #keeping only sex, gender, poly ID, group, clusters, & same or diff variables
+pp3 <- pp3[,c(2, 5, 8, 10, 144:147)]
+
+#get rid of people that preferred not to say for poly identity
+pp2 <- pp2[pp2$poly_identity != 2,]
+pp3 <- pp3[pp3$poly_identity != 2,]
+
+#add study columns
+pp4Comparison$study <- "pp4"
+pp2$study <- "pp2"
+pp3$study <- "pp3"
+
+#pool dfs together
+polyMonogComparisonData <- rbind(pp2, pp3, pp4Comparison)
+
+#chi square test: are poly participants more likely to have partners in the same cluster
+polyMonogCompTest <- chisq.test(table(polyMonogComparisonData$poly_identity, polyMonogComparisonData$sameOrDiff))
+
 
 
 
