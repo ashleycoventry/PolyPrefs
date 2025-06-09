@@ -221,7 +221,6 @@ data$totalBlue <- rowSums(data[, 14:20], na.rm = TRUE)
 #if neither is true ( so blue < orange), give -1. 
 data$alloComp <- sign(data$totalBlue - data$totalOrange)
 
-
 #create dataframe excluding rows where alloComp = 0 
 #(bc we just want to look at unequal distribution for now)
 alloData <- subset(data, alloComp != 0)
@@ -250,6 +249,8 @@ fisherAlloM <- fisher.test((table(alloData$highClust[alloData$sex == 1], alloDat
 
 alloTableM <- table(alloData$highClust[alloData$sex == 1], alloData$lowClust[alloData$sex == 1])
 
+###save data for comparison with poly sample from later study
+#write.csv(data, "Human Data/Processed Data/PP2AnalyzedData.csv", row.names = FALSE)
 
 
 
