@@ -12,6 +12,7 @@ library(pwr) # for pwr.chisq.test function
 library(lme4)
 library(ggpubr)
 library(rcompanion) #for cramer's v for fisher's tests
+library(dplyr) #summarise function
 
 ###set seed###
 set.seed(040623)
@@ -244,6 +245,12 @@ chisqAllo <- chisq.test(table(alloData$highClust, alloData$lowClust))
 alloTable <- table(alloData$highClust, alloData$lowClust)
 
 
+#means and SE for each traits by cluster and by sex
+allocationDescriptivesMen <- data[data$gender == 1,] %>%
+  summarise(across(14:27, c(mean, sd))) #1 = mean, 2 = sd
+allocationDescriptivesWomen<- data[data$gender == 0,] %>%
+  summarise(across(14:27, c(mean, sd)))
+
 
 
 ###Investment Questions Analysis###
@@ -313,7 +320,22 @@ emotCloseMeans <- tapply(investData$emotDeviation, investData$sameOrDiff, mean)
 emotCloseSDs <- tapply(investData$emotDeviation, investData$sameOrDiff, sd)
 
 
+#Q2:Is investment a function of cluster? Which cluster gets more investment?
+##investment variables are on 1-7 (time, money) and 1-5 (emotional closeness) scales
+##higher numbers on these scales = more investment in partner Orange compared to partner Blue
 
+###financial investment (7-point scale)
+finInvestClusterAnova <- aov(fin_invest ~ blueClust*orangeClust, data = data)
+finInvestClusterMeans <- tapply(data$fin_invest, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+finInvestClusterSDs <- tapply(data$fin_invest, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
+###time investment (7 point scale)
+timeInvestClusterAnova <- aov(time_invest ~ blueClust*orangeClust, data = data)
+timeInvestClusterMeans <- tapply(data$time_invest, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+timeInvestClusterSDs <- tapply(data$time_invest, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
+###emotional closeness (5 point scale)
+emotCloseInvestClusterAnova <- aov(emot_close ~ blueClust*orangeClust, data = data)
+emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
 #save investment data frame to later compare investment results to those of poly study
 #write.csv(investData,paste0("Human Data/Processed Data/PP3InvestData.csv"), row.names = FALSE)
 
