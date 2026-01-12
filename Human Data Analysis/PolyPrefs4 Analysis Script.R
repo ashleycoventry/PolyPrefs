@@ -370,6 +370,34 @@ timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
 emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
 
 
+
+#means and SE for each traits by cluster and by sex
+allocationDescriptivesMen <- data[data$gender == 1,] %>%
+  summarise(across(15:28, c(mean, sd))) #1 = mean, 2 = sd
+allocationDescriptivesWomen<- data[data$gender == 0,] %>%
+  summarise(across(15:28, c(mean, sd)))
+
+#Q2:Is investment a function of cluster? Which cluster gets more investment?
+##investment variables are on 1-7 (time, money) and 1-5 (emotional closeness) scales
+##higher numbers on these scales = more investment in partner Orange compared to partner Blue
+
+###financial investment (7-point scale)
+finInvestClusterAnova <- aov(fin_invest ~ blueClust+orangeClust, data = data) #no sig interaction, so ran with main effect terms
+finInvestClusterMeans <- tapply(data$fin_invest, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+finInvestClusterSDs <- tapply(data$fin_invest, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
+###time investment (7 point scale)
+timeInvestClusterAnova <- aov(time_invest ~ blueClust+orangeClust, data = data)
+timeInvestClusterMeans <- tapply(data$time_invest, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+timeInvestClusterSDs <- tapply(data$time_invest, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
+###emotional closeness (5 point scale)
+emotCloseInvestClusterAnova <- aov(emot_close ~ blueClust+orangeClust, data = data)
+emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
+
+
+
+
+
+
 #####Monog vs Poly comparison
 
 #loading in PP2 & 3 data (monog samples)
