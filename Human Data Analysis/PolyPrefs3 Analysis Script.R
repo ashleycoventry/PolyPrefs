@@ -13,6 +13,9 @@ library(lme4)
 library(ggpubr)
 library(rcompanion) #for cramer's v for fisher's tests
 library(dplyr) #summarise function
+library(ordinal)
+library(ggeffects)
+library(MetBrewer)
 
 ###set seed###
 set.seed(040623)
