@@ -319,7 +319,7 @@ investData$emotDevDich <- ifelse(investData$emotDeviation == 0, 0, 1)
 
 ##time investment
 investData$timeDeviationOrd <- ordered(investData$timeDevDich)
-timeDeviationOR <- clm(timeDeviationOrd ~ sameOrDiff*gender, data = investData)
+timeDeviationOR <- clm(timeDeviationOrd ~ sameOrDiff+gender, data = investData)
 #test proportional odds assumption
 oddsAssumptionCheckTime <- nominal_test(timeDeviationOR) 
 

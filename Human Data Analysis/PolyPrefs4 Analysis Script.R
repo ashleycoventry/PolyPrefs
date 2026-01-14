@@ -455,24 +455,52 @@ pp3 <- read.csv("Human Data/Processed Data/PP3AnalyzedData.csv")
 pp4Comparison <- data[,c(2, 5, 8, 10, 171:174)]
 
 #filter out unnecessary cols of pp2 and pp3 data
-pp2 <- pp2[,c(2, 5, 8, 10, 134:137)] #keeping only sex, gender, poly ID, group, clusters, & same or diff variables
-pp3 <- pp3[,c(2, 5, 8, 10, 144:147)]
+pp2comp <- pp2[,c(2, 5, 8, 10, 134:137)] #keeping only sex, gender, poly ID, group, clusters, & same or diff variables
+pp3comp <- pp3[,c(2, 5, 8, 10, 144:147)]
 
 #get rid of people that preferred not to say for poly identity
-pp2 <- pp2[pp2$poly_identity != 2,]
-pp3 <- pp3[pp3$poly_identity != 2,]
+pp2comp <- pp2comp[pp2comp$poly_identity != 2,]
+pp3comp <- pp3comp[pp3comp$poly_identity != 2,]
 
 #add study columns
 pp4Comparison$study <- "pp4"
-pp2$study <- "pp2"
-pp3$study <- "pp3"
+pp2comp$study <- "pp2"
+pp3comp$study <- "pp3"
 
 #pool dfs together
-polyMonogComparisonData <- rbind(pp2, pp3, pp4Comparison)
+polyMonogComparisonData <- rbind(pp2comp, pp3comp, pp4Comparison)
 
 #chi square test: are poly participants more likely to have partners in the same cluster
 polyMonogCompTest <- chisq.test(table(polyMonogComparisonData$poly_identity, polyMonogComparisonData$sameOrDiff))
 
 
+
+#investment: are poly people more likely to have equal vs unequal investment (pp3 & pp4)
+pp3Invest <- read.csv("Human Data/Processed Data/PP3InvestData.csv")
+pp3Invest$study <- "pp3"
+
+investData$study <- "pp4"
+
+investDataComp <- rbind(pp3Invest, investData)
+investDataComp$study <- as.factor(investDataComp$study)
+investDataComp$finDeviationDich <- as.factor(ifelse(investDataComp$finDeviation == 0, 0, 1))
+
+#financial
+finInvestComp <- clm(finDeviationDich ~ study, data = investDataComp)
+#test proportional odds assumption
+oddsAssumptionCheckFinComp <- nominal_test(finInvestComp) 
+
+
+#time
+investDataComp$timeDevDich <- as.factor(investDataComp$timeDevDich)
+timeInvestComp <- clm(timeDevDich ~ study, data = investDataComp)
+#test proportional odds assumption
+oddsAssumptionCheckTimeComp <- nominal_test(timeInvestComp) 
+
+#emotional
+investDataComp$emotDevDich <- as.factor(investDataComp$emotDevDich)
+emotInvestComp <- clm(emotDevDich ~ study, data = investDataComp)
+#test proportional odds assumption
+oddsAssumptionCheckEmotComp <- nominal_test(emotInvestComp) 
 
 
