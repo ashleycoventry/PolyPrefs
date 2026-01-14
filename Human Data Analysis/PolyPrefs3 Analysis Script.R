@@ -275,7 +275,7 @@ investData <- investData %>%
 
 
 
-##anova comparing deviation for same vs diff clusters
+##ordinal regressions comparing deviation for same vs diff clusters
 investData$sameOrDiff <- as.factor(investData$sameOrDiff)
 investData$gender <- as.factor(investData$gender)
 
@@ -284,40 +284,86 @@ nacheckInvest <- apply(investData[,9:11], 1, function(x) sum(is.na(x))>0)
 investData<- investData[!nacheckInvest,]
 
 
-#financial investment
-finInvestAnova <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
-finInvestMeans <- tapply(investData$finDeviation, list(investData$sameOrDiff, investData$gender), mean) 
-#first variable listed in the list function is down the sides in the output, second is across
-finInvestSDs <- tapply(investData$finDeviation, list(investData$sameOrDiff, investData$gender), sd)
+##financial investment
 
-#plot interaction
-finInvestIntPlot <- ggplot(investData, aes(x = sameOrDiff, y = finDeviation, fill = gender))+
-  geom_boxplot(position = position_dodge(width = 0.9), width = 0.2, color = "black", outlier.shape = NA) + 
-  scale_fill_manual(values = c("0" = "#8E44AD", "1" = "#2980B9"), 
-                    labels = c("Female", "Male")) +
-  scale_x_discrete(labels = c("0" = "Different", "1" = "Same")) +
-  scale_y_continuous(limits = c(0, 3.0)) +
-  labs(x = "Ideal Partner Cluster (Same Or Different)", y = "Deviation from Equal Investment", 
-       fill = "Participant Gender") +
-  theme_minimal()+theme(
-    axis.title = element_text(size = 16),  
-    axis.text = element_text(size = 14),   
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 14)  
-  )
-
-#ggsave("PP3FinInvestIntPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+investData$finDeviationOrd <- ordered(investData$finDeviation)
+finDeviationOR <- clm(finDeviationOrd ~ sameOrDiff*gender, 
+                 data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckFin <- nominal_test(finDeviationOR) 
 
 
+#plot predicted probabilities
+ORPlotProbsFin <- ggpredict(finDeviationOR, terms = c("sameOrDiff", "gender"))
+ORPlotProbsFin$response.level <- factor(ORPlotProbsFin$response.level,
+  levels = c(1, 2, 3, 4), labels = c("0", "1", "2", "3"))
 
-timeInvestAnova <- aov(timeDeviation ~ sameOrDiff+gender, data = investData)
-timeInvestMeans <- tapply(investData$timeDeviation, investData$sameOrDiff, mean)
-timeInvestSDs <- tapply(investData$timeDeviation, investData$sameOrDiff, sd)
+finDeviationPlot <- ggplot(ORPlotProbsFin, aes(x = x, y = predicted, fill = response.level))+
+  geom_col(position = position_dodge(width = .9)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = .9), width = .2) +
+  facet_wrap(~ group, labeller = as_labeller(c("0" = "Women", "1" = "Men"))) +
+  scale_fill_met_d(name = "Egypt") +
+  labs(x = "Different or Same Clusters", y = "Predicted Probability", fill = "Deviation from\nEqual Investment")+
+  scale_x_discrete(labels = c("Different\nClusters", "Same\nCluster")) +
+  theme_classic(base_size = 14)
+#ggsave("PP3FinDeviationPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
 
 
-emotCloseAnova <- aov(emotDeviation ~ sameOrDiff+gender, data = investData)
-emotCloseMeans <- tapply(investData$emotDeviation, investData$sameOrDiff, mean)
-emotCloseSDs <- tapply(investData$emotDeviation, investData$sameOrDiff, sd)
+#for time and emotion, need to dichotomize deviation 
+#model without it dichotomized violated proportional odds assumption 
+investData$timeDevDich <- ifelse(investData$timeDeviation == 0, 0, 1)
+investData$emotDevDich <- ifelse(investData$emotDeviation == 0, 0, 1)
+
+##time investment
+investData$timeDeviationOrd <- ordered(investData$timeDevDich)
+timeDeviationOR <- clm(timeDeviationOrd ~ sameOrDiff*gender, data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckTime <- nominal_test(timeDeviationOR) 
+
+
+#plot predicted probabilities
+ORPlotProbsTime <- ggpredict(timeDeviationOR, terms = c("sameOrDiff", "gender"))
+ORPlotProbsTime$response.level <- factor(ORPlotProbsTime$response.level,
+                                        levels = c(1, 2), labels = c("Equal", "Unequal"))
+
+timeDeviationPlot <- ggplot(ORPlotProbsTime, aes(x = x, y = predicted, fill = response.level))+
+  geom_col(position = position_dodge(width = .9)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = .9), width = .2) +
+  facet_wrap(~ group, labeller = as_labeller(c("0" = "Women", "1" = "Men"))) +
+  scale_fill_met_d(name = "Egypt") +
+  labs(x = "Different or Same Clusters", y = "Predicted Probability", fill = "Deviation from\nEqual Investment")+
+  scale_x_discrete(labels = c("Different\nClusters", "Same\nCluster")) +
+  theme_classic(base_size = 14)
+#ggsave("PP3TimeDeviationPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+
+
+
+
+##emotional closeness
+investData$emotDeviationOrd <- ordered(investData$emotDevDich)
+emotDeviationOR <- clm(emotDeviationOrd ~ sameOrDiff*gender, data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckEmot <- nominal_test(emotDeviationOR) 
+
+#plot predicted probabilities
+ORPlotProbsEmot <- ggpredict(emotDeviationOR, terms = c("sameOrDiff", "gender"))
+ORPlotProbsEmot$response.level <- factor(ORPlotProbsEmot$response.level,
+                                         levels = c(1, 2), labels = c("Equal", "Unequal"))
+
+emotDeviationPlot <- ggplot(ORPlotProbsEmot, aes(x = x, y = predicted, fill = response.level))+
+  geom_col(position = position_dodge(width = .9)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = .9), width = .2) +
+  facet_wrap(~ group, labeller = as_labeller(c("0" = "Women", "1" = "Men"))) +
+  scale_fill_met_d(name = "Egypt") +
+  labs(x = "Different or Same Clusters", y = "Predicted Probability", fill = "Deviation from\nEqual Investment")+
+  scale_x_discrete(labels = c("Different\nClusters", "Same\nCluster")) +
+  theme_classic(base_size = 14)
+#ggsave("PP3EmotDeviationPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+
+
+
+
+
 
 
 #Q2:Is investment a function of cluster? Which cluster gets more investment?
@@ -335,7 +381,7 @@ timeInvestClusterSDs <- tapply(data$time_invest, list(data$blueClust, data$orang
 ###emotional closeness (5 point scale)
 emotCloseInvestClusterAnova <- aov(emot_close ~ blueClust*orangeClust, data = data)
 emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
-emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
+emotCloseInvestClusterSDs <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) sd(x, na.rm = T))
 #save investment data frame to later compare investment results to those of poly study
 #write.csv(investData,paste0("Human Data/Processed Data/PP3InvestData.csv"), row.names = FALSE)
 
