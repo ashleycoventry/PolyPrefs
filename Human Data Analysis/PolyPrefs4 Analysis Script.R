@@ -5,8 +5,9 @@ library(data.table) #for reshaping data
 library(ggplot2) #for scree plot + visualizing data
 library(rcompanion) #for cohenW test
 library(ggpubr) #for ggarrange
-
-
+library(ordinal) #for ordinal regression
+library(ggeffects)
+library(MetBrewer)
 ###set seed###
 set.seed(010423)
 
@@ -352,9 +353,7 @@ investData <- investData %>%
          emotDeviation = abs(emotClose - 4))
 
 
-
-
-##anova comparing deviation for same vs diff clusters
+##ordinal regressions comparing deviation for same vs diff clusters
 investData$sameOrDiff <- as.factor(investData$sameOrDiff)
 investData$gender <- as.factor(investData$gender)
 
@@ -363,19 +362,67 @@ nacheckInvest <- apply(investData[,9:11], 1, function(x) sum(is.na(x))>0)
 investData<- investData[!nacheckInvest,]
 
 
-finInvestAnovaInt <- aov(finDeviation ~ sameOrDiff*gender, data = investData)
-finInvestAnova <- aov(finDeviation ~ sameOrDiff+gender, data = investData)
+##financial investment
 
-timeInvestAnova <- aov(timeDeviation ~ sameOrDiff + gender, data = investData)
-emotCloseAnova <- aov(emotDeviation ~ sameOrDiff + gender, data = investData)
+investData$finDeviationOrd <- ordered(investData$finDeviation)
+finDeviationOR <- clm(finDeviationOrd ~ sameOrDiff*gender, 
+                 data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckFin <- nominal_test(finDeviationOR) 
 
 
 
-#means and SE for each traits by cluster and by sex
-allocationDescriptivesMen <- data[data$gender == 1,] %>%
-  summarise(across(15:28, c(mean, sd))) #1 = mean, 2 = sd
-allocationDescriptivesWomen<- data[data$gender == 0,] %>%
-  summarise(across(15:28, c(mean, sd)))
+#for time and emotion, need to dichotomize deviation 
+#model without it dichotomized violated proportional odds assumption 
+investData$timeDevDich <- ifelse(investData$timeDeviation == 0, 0, 1)
+investData$emotDevDich <- ifelse(investData$emotDeviation == 0, 0, 1)
+
+##time investment
+investData$timeDeviationOrd <- ordered(investData$timeDevDich)
+timeDeviationOR <- clm(timeDeviationOrd ~ sameOrDiff+gender, data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckTime <- nominal_test(timeDeviationOR) 
+
+
+#plot predicted probabilities
+ORPlotProbsTime <- ggpredict(timeDeviationOR, terms = c("sameOrDiff", "gender"))
+ORPlotProbsTime$response.level <- factor(ORPlotProbsTime$response.level,
+                                        levels = c(1, 2), labels = c("Equal", "Unequal"))
+
+timeDeviationPlot <- ggplot(ORPlotProbsTime, aes(x = x, y = predicted, fill = response.level))+
+  geom_col(position = position_dodge(width = .9)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = .9), width = .2) +
+  facet_wrap(~ group, labeller = as_labeller(c("0" = "Women", "1" = "Men"))) +
+  scale_fill_met_d(name = "Egypt") +
+  labs(x = "Different or Same Clusters", y = "Predicted Probability", fill = "Deviation from\nEqual Investment")+
+  scale_x_discrete(labels = c("Different\nClusters", "Same\nCluster")) +
+  theme_classic(base_size = 14)
+#ggsave("PP4TimeDeviationPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+
+
+
+##emotional closeness
+investData$emotDeviationOrd <- ordered(investData$emotDevDich)
+emotDeviationOR <- clm(emotDeviationOrd ~ sameOrDiff*gender, data = investData)
+#test proportional odds assumption
+oddsAssumptionCheckEmot <- nominal_test(emotDeviationOR) 
+
+#plot predicted probabilities
+ORPlotProbsEmot <- ggpredict(emotDeviationOR, terms = c("sameOrDiff", "gender"))
+ORPlotProbsEmot$response.level <- factor(ORPlotProbsEmot$response.level,
+                                         levels = c(1, 2), labels = c("Equal", "Unequal"))
+
+emotDeviationPlot <- ggplot(ORPlotProbsEmot, aes(x = x, y = predicted, fill = response.level))+
+  geom_col(position = position_dodge(width = .9)) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = .9), width = .2) +
+  facet_wrap(~ group, labeller = as_labeller(c("0" = "Women", "1" = "Men"))) +
+  scale_fill_met_d(name = "Egypt") +
+  labs(x = "Different or Same Clusters", y = "Predicted Probability", fill = "Deviation from\nEqual Investment")+
+  scale_x_discrete(labels = c("Different\nClusters", "Same\nCluster")) +
+  theme_classic(base_size = 14)
+#ggsave("PP4EmotDeviationPlot.jpeg", plot = last_plot(), width = 200, height = 150, units = "mm", path = "/Users/ashle/Desktop",scale = 1, dpi = 300, limitsize = TRUE)
+
+
 
 #Q2:Is investment a function of cluster? Which cluster gets more investment?
 ##investment variables are on 1-7 (time, money) and 1-5 (emotional closeness) scales
@@ -426,136 +473,6 @@ polyMonogComparisonData <- rbind(pp2, pp3, pp4Comparison)
 #chi square test: are poly participants more likely to have partners in the same cluster
 polyMonogCompTest <- chisq.test(table(polyMonogComparisonData$poly_identity, polyMonogComparisonData$sameOrDiff))
 
-
-
-
-
-#####Alternative cluster analysis
-
-##make data wide (1 row per participant)
-wideData <- data[,c(136, 5, 15:28, 30, 32)]
-
-
-
-#Cluster Analysis
-
-
-#extract kmeans wSs
-kfitWssAlt<-sapply(1:7,function(x) kmeans(wideData[,3:16],x, nstart= 100)$tot.withinss)
-
-#scree plot
-screePlotAlt<-qplot(1:7,kfitWssAlt)
-
-
-##compute differences in within ss across k for k-means clustering
-wssDiffsAlt<-diff(kfitWssAlt)
-
-
-##Add this classification to the original dataframe
-
-kFitAlt<-kmeans(wideData[,3:16],2)
-wideData$kFitAlt <- kFitAlt$cluster
-
-
-##Create vectors of preference means for each cluster (without age)
-clustCentersAlt<-kFitAlt$centers
-
-##Look at gender breakdown by cluster
-clustGenderAlt<-table(wideData$gender,wideData$kFitAlt)
-
-##compute variance between trait ratings for each cluster
-#to see if maybe one cluster is more well rounded than others
-clustVarsAlt<-apply(clustCentersAlt,1,var)
-
-
-##multipanel figure
-#first create individual plot for each cluster
-
-#cluster 1 (title will change based on clusters)
-meanTraitAlt1 <- clustCentersAlt[1,]
-traitAlt1 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-partner <- c(rep("Blue", 7), rep("Orange", 7))
-plottingAlt1 <- data.frame(meanTraitAlt1, traitAlt1, partner)
-plotAlt1 <- ggplot(data=plottingAlt1, aes(x=traitAlt1, y=meanTraitAlt1, fill = partner)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(width = .9))+
-  scale_fill_manual(values = c("Blue" = "lightblue", "Orange" = "#FFC067")) +
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
-  ggtitle("Cluster 1")
-
-
-#cluster 2 
-meanTraitAlt2 <- clustCentersAlt[2,]
-traitAlt2 <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-partner <- c(rep("Blue", 7), rep("Orange", 7))
-plottingAlt2 <- data.frame(meanTraitAlt2, traitAlt2, partner)
-plotAlt2 <- ggplot(data=plottingAlt2, aes(x=traitAlt2, y=meanTraitAlt2, fill = partner)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(width = .9))+
-  scale_fill_manual(values = c("Blue" = "lightblue", "Orange" = "#FFC067")) +
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 10) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 10), axis.text.x = element_text(angle = 90))+
-  ggtitle("Cluster 2")
-
-#combine clusters into one graph
-panelPlot<-ggarrange(plot1, plot2, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
-
-
-
-#alternative graphing
-#cluster 1 
-meanTraitAlt1Blue <- clustCentersAlt[1,1:7]
-traitAlt1Blue <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-plottingAlt1Blue <- data.frame(meanTraitAlt1Blue, traitAlt1Blue)
-plotAlt1Blue <- ggplot(data=plottingAlt1Blue, aes(x=traitAlt1Blue, y=meanTraitAlt1Blue)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "lightblue")+
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
-  ggtitle("Cluster 1 Blue")
-
-meanTraitAlt1Orange <- clustCentersAlt[1,8:14]
-traitAlt1Orange <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-plottingAlt1Orange <- data.frame(meanTraitAlt1Orange, traitAlt1Orange)
-plotAlt1Orange <- ggplot(data=plottingAlt1Orange, aes(x=traitAlt1Orange, y=meanTraitAlt1Orange)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "#FFC067")+
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
-  ggtitle("Cluster 1 Orange")
-
-
-#combine clusters into one graph
-panelPlotAltCluster1<-ggarrange(plotAlt1Blue, plotAlt1Orange, nrow=1, ncol=2,font.label = list(size = 10, color = "black"))
-
-
-#cluster 2
-meanTraitAlt2Blue <- clustCentersAlt[2,1:7]
-traitAlt2Blue <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-plottingAlt2Blue <- data.frame(meanTraitAlt2Blue, traitAlt2Blue)
-plotAlt2Blue <- ggplot(data=plottingAlt2Blue, aes(x=traitAlt2Blue, y=meanTraitAlt2Blue)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "lightblue")+
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
-  ggtitle("Cluster 2 Blue")
-
-meanTraitAlt2Orange <- clustCentersAlt[2,8:14]
-traitAlt2Orange <- c("Ambition", "Attractiveness", "Intelligence", "Good in Bed", "Kindness", "Status", "Resources")
-plottingAlt2Orange <- data.frame(meanTraitAlt2Orange, traitAlt2Orange)
-plotAlt2Orange <- ggplot(data=plottingAlt2Orange, aes(x=traitAlt2Orange, y=meanTraitAlt2Orange)) +
-  geom_bar(stat="identity", color="black", position=position_dodge(), fill = "#FFC067")+
-  geom_hline(yintercept = 5, color="black", linetype = "dashed", linewidth = 1) +
-  theme_minimal(base_size = 12) + xlab("Trait") + ylab("Average Desired Trait Level")  +ylim(0,8) +
-  theme(plot.title = element_text(size = 12), axis.text.x = element_text(angle = 90, size = 12), axis.text.y = element_text(size = 12))+
-  ggtitle("Cluster 2 Orange")
-
-
-#combine clusters into one graph
-panelPlotAltClustersSeparated<-ggarrange(plotAlt1Blue, plotAlt1Orange, plotAlt2Blue, plotAlt2Orange, nrow=2, ncol=2,font.label = list(size = 12, color = "black"))
-
-#ggsave("PP4PlotPanelAltAnalysis.jpeg", plot=last_plot(), width=275, height=275, units="mm", path ="/Users/ashle/Desktop", scale = 1, dpi=300, limitsize=TRUE)
 
 
 
