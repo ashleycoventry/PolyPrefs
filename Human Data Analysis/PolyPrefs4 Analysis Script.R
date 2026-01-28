@@ -365,7 +365,7 @@ investData<- investData[!nacheckInvest,]
 ##financial investment
 
 investData$finDeviationOrd <- ordered(investData$finDeviation)
-finDeviationOR <- clm(finDeviationOrd ~ sameOrDiff*gender, 
+finDeviationOR <- clm(finDeviationOrd ~ sameOrDiff+gender, 
                  data = investData)
 #test proportional odds assumption
 oddsAssumptionCheckFin <- nominal_test(finDeviationOR) 
@@ -403,7 +403,7 @@ timeDeviationPlot <- ggplot(ORPlotProbsTime, aes(x = x, y = predicted, fill = re
 
 ##emotional closeness
 investData$emotDeviationOrd <- ordered(investData$emotDevDich)
-emotDeviationOR <- clm(emotDeviationOrd ~ sameOrDiff*gender, data = investData)
+emotDeviationOR <- clm(emotDeviationOrd ~ sameOrDiff+gender, data = investData)
 #test proportional odds assumption
 oddsAssumptionCheckEmot <- nominal_test(emotDeviationOR) 
 
@@ -439,9 +439,6 @@ timeInvestClusterSDs <- tapply(data$time_invest, list(data$blueClust, data$orang
 ###emotional closeness (5 point scale)
 emotCloseInvestClusterAnova <- aov(emot_close ~ blueClust+orangeClust, data = data)
 emotCloseInvestClusterMeans <- tapply(data$emot_close, list(data$blueClust, data$orangeClust), function(x) mean(x, na.rm = T))
-
-
-
 
 
 
