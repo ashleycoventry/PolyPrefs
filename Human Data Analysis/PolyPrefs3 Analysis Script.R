@@ -291,7 +291,7 @@ investData<- investData[!nacheckInvest,]
 
 investData$finDeviationOrd <- ordered(investData$finDeviation)
 finDeviationOR <- clm(finDeviationOrd ~ sameOrDiff*gender, 
-                 data = investData)
+                 data = investData) #ouput makes 0s and 1s into 1s and 2s
 #test proportional odds assumption
 oddsAssumptionCheckFin <- nominal_test(finDeviationOR) 
 
